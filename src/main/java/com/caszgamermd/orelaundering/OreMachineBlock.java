@@ -11,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -56,7 +57,25 @@ public final class OreMachineBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
+        Direction face = context.getClickedFace();
+        if (kind == OreMachines.Kind.WALL && face.getAxis().isHorizontal()) {
+            return defaultBlockState().setValue(FACING, face);
+        }
         return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    protected boolean canSurvive(BlockState state, LevelReader level, BlockPos pos) {
+        if (kind == OreMachines.Kind.CEILING) {
+            BlockPos above = pos.above();
+            return level.getBlockState(above).isFaceSturdy(level, above, Direction.DOWN);
+        }
+        if (kind == OreMachines.Kind.WALL) {
+            Direction back = state.getValue(FACING).getOpposite();
+            BlockPos support = pos.relative(back);
+            return level.getBlockState(support).isFaceSturdy(level, support, back.getOpposite());
+        }
+        return true;
     }
 
     @Override
@@ -70,10 +89,10 @@ public final class OreMachineBlock extends BaseEntityBlock {
         if (kind == OreMachines.Kind.TROUGH) return box(0, 0, 0, 16, 7, 16);
         if (kind == OreMachines.Kind.WALL) {
             return switch (state.getValue(FACING)) {
-                case NORTH -> box(1, 1, 0, 15, 15, 5);
-                case SOUTH -> box(1, 1, 11, 15, 15, 16);
-                case WEST -> box(0, 1, 1, 5, 15, 15);
-                default -> box(11, 1, 1, 16, 15, 15);
+                case NORTH -> box(1, 1, 11, 15, 15, 16);
+                case SOUTH -> box(1, 1, 0, 15, 15, 5);
+                case WEST -> box(11, 1, 1, 16, 15, 15);
+                default -> box(0, 1, 1, 5, 15, 15);
             };
         }
         return box(0, 0, 0, 16, 16, 16);
