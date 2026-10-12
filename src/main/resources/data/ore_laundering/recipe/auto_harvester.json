@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IRI",
+    "SHS",
+    "IRI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "R": "minecraft:redstone",
+    "S": "minecraft:shears",
+    "H": "minecraft:hopper"
+  },
+  "result": {
+    "id": "ore_laundering:auto_harvester",
+    "count": 1
+  }
+}

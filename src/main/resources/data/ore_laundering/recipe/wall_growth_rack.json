@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "I I",
+    "ISI",
+    "I I"
+  ],
+  "key": {
+    "I": "minecraft:iron_bars",
+    "S": "minecraft:stone_slab"
+  },
+  "result": {
+    "id": "ore_laundering:wall_growth_rack",
+    "count": 1
+  }
+}

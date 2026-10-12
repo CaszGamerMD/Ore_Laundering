@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "FDF",
+    " I ",
+    " I "
+  ],
+  "key": {
+    "F": "minecraft:flint",
+    "D": "minecraft:diamond",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "ore_laundering:grinding_bit",
+    "count": 1
+  }
+}

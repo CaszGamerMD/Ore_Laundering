@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "I I",
+    "IDI",
+    "III"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "D": "minecraft:dirt"
+  },
+  "result": {
+    "id": "ore_laundering:grow_trough",
+    "count": 1
+  }
+}

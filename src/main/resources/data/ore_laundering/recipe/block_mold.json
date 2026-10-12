@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CCC",
+    "CIC",
+    "CCC"
+  ],
+  "key": {
+    "C": "minecraft:brick",
+    "I": "minecraft:iron_block"
+  },
+  "result": {
+    "id": "ore_laundering:block_mold",
+    "count": 1
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "CCC",
+    "CNC",
+    "CCC"
+  ],
+  "key": {
+    "C": "minecraft:clay_ball",
+    "N": "minecraft:iron_nugget"
+  },
+  "result": {
+    "id": "ore_laundering:nugget_mold",
+    "count": 1
+  }
+}
