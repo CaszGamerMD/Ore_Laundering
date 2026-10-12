@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "ore_laundering",
+  "version": "${version}",
+  "name": "Ore Laundering",
+  "description": "Grow counterfeit ores, grind them, and cast metal in lava-fired vats.",
+  "authors": ["CaszGamerMD"],
+  "contact": {"sources": "https://github.com/CaszGamerMD/Ore_Laundering"},
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {"main": ["com.caszgamermd.orelaundering.OreLaundering"]},
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
