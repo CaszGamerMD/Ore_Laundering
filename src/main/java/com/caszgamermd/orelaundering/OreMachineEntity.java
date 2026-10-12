@@ -70,7 +70,7 @@ public final class OreMachineEntity extends BlockEntity {
     }
 
     private static void notice(Player player, String message) {
-        player.displayClientMessage(Component.literal(message), true);
+        player.sendOverlayMessage(Component.literal(message));
     }
 
     private void drop(ItemStack stack) {
@@ -191,7 +191,7 @@ public final class OreMachineEntity extends BlockEntity {
         drop(new ItemStack(result));
         if (molten == 0) ore = "";
         setChanged();
-        notice(player, "Cast " + result.getDescription().getString());
+        notice(player, "Cast " + new ItemStack(result).getHoverName().getString());
     }
 
     public void interactEmpty(Player player) {
