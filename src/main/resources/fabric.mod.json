@@ -8,7 +8,8 @@
   "contact": {"sources": "https://github.com/CaszGamerMD/Ore_Laundering"},
   "license": "MIT",
   "environment": "*",
-  "entrypoints": {"main": ["com.caszgamermd.orelaundering.OreLaundering"]},
+  "entrypoints": {"main": ["com.caszgamermd.orelaundering.OreLaundering"],
+    "client": ["com.caszgamermd.orelaundering.client.OreLaunderingClient"]},
   "depends": {
     "fabricloader": ">=0.19.5",
     "minecraft": "~26.2",

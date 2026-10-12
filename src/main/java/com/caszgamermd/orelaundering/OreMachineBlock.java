@@ -28,7 +28,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class OreMachineBlock extends BaseEntityBlock {
     public static final Property<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
-    public static final IntegerProperty GROWTH = IntegerProperty.create("growth", 0, 3);
+    public static final IntegerProperty GROWTH = IntegerProperty.create("growth", 0, 4);
 
     private final OreMachines.Kind kind;
 

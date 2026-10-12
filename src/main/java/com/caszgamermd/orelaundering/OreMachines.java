@@ -16,7 +16,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 public final class OreMachines {
     private OreMachines() {}
 
-    public enum Kind { WALL, CEILING, TROUGH, GRINDER, VAT, TANK }
+    public enum Kind { WALL, CEILING, TROUGH, GRINDER, VAT, TANK, LAVA_TANK }
 
     private static Block register(String name, Kind kind) {
         ResourceKey<Block> blockKey = ResourceKey.create(Registries.BLOCK, OreLaundering.id(name));
@@ -36,6 +36,7 @@ public final class OreMachines {
     public static final Block GRINDER = register("grinder", Kind.GRINDER);
     public static final Block ORE_VAT = register("ore_vat", Kind.VAT);
     public static final Block ORE_TANK = register("ore_tank", Kind.TANK);
+    public static final Block LAVA_TANK = register("lava_tank", Kind.LAVA_TANK);
 
     public static BlockEntityType<OreMachineEntity> BLOCK_ENTITY;
 
@@ -43,6 +44,6 @@ public final class OreMachines {
         BLOCK_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE,
             OreLaundering.id("machine"),
             FabricBlockEntityTypeBuilder.create(OreMachineEntity::new,
-                WALL_RACK, CEILING_RACK, GROW_TROUGH, GRINDER, ORE_VAT, ORE_TANK).build());
+                WALL_RACK, CEILING_RACK, GROW_TROUGH, GRINDER, ORE_VAT, ORE_TANK, LAVA_TANK).build());
     }
 }

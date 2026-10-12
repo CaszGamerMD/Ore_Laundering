@@ -2,6 +2,15 @@ plugins {
  id 'net.fabricmc.fabric-loom' version "${loom_version}"
  id 'maven-publish'
 }
+loom {
+ splitEnvironmentSourceSets()
+ mods {
+  "ore_laundering" {
+   sourceSet sourceSets.main
+   sourceSet sourceSets.client
+  }
+ }
+}
 base { archivesName = 'ore-laundering' }
 version = project.version
 group = project.group

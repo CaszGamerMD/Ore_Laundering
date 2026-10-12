@@ -17,6 +17,7 @@ public final class OreLaundering implements ModInitializer {
     public void onInitialize() {
         OreMachines.initialize();
         OreItems.initialize();
+        OreMenus.initialize();
         LOGGER.info("Ore Laundering initialized for Minecraft 26.2");
     }
 }
