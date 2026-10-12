@@ -1,7 +1,7 @@
 package com.caszgamermd.orelaundering;
 
 import com.mojang.serialization.Codec;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricCreativeModeTab;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
