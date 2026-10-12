@@ -359,7 +359,7 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
                 be.progress++;
                 if (be.progress % 20 == 0 || be.progress == be.growthTime()) {
                     be.refreshGrowthStage();
-                    be.setChanged();
+                    be.changed();
                 }
             }
             if (be.progress >= be.growthTime() && be.auto) be.harvest();
