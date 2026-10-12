@@ -2,67 +2,67 @@
   "variants": {
     "facing=north,growth=0": {
       "model": "ore_laundering:block/wall_growth_rack_stage0",
-      "y": 0
+      "y": 180
     },
     "facing=north,growth=1": {
       "model": "ore_laundering:block/wall_growth_rack_stage1",
-      "y": 0
+      "y": 180
     },
     "facing=north,growth=2": {
       "model": "ore_laundering:block/wall_growth_rack_stage2",
-      "y": 0
+      "y": 180
     },
     "facing=north,growth=3": {
       "model": "ore_laundering:block/wall_growth_rack_stage3",
-      "y": 0
+      "y": 180
     },
     "facing=east,growth=0": {
       "model": "ore_laundering:block/wall_growth_rack_stage0",
-      "y": 90
+      "y": 270
     },
     "facing=east,growth=1": {
       "model": "ore_laundering:block/wall_growth_rack_stage1",
-      "y": 90
+      "y": 270
     },
     "facing=east,growth=2": {
       "model": "ore_laundering:block/wall_growth_rack_stage2",
-      "y": 90
+      "y": 270
     },
     "facing=east,growth=3": {
       "model": "ore_laundering:block/wall_growth_rack_stage3",
-      "y": 90
+      "y": 270
     },
     "facing=south,growth=0": {
       "model": "ore_laundering:block/wall_growth_rack_stage0",
-      "y": 180
+      "y": 0
     },
     "facing=south,growth=1": {
       "model": "ore_laundering:block/wall_growth_rack_stage1",
-      "y": 180
+      "y": 0
     },
     "facing=south,growth=2": {
       "model": "ore_laundering:block/wall_growth_rack_stage2",
-      "y": 180
+      "y": 0
     },
     "facing=south,growth=3": {
       "model": "ore_laundering:block/wall_growth_rack_stage3",
-      "y": 180
+      "y": 0
     },
     "facing=west,growth=0": {
       "model": "ore_laundering:block/wall_growth_rack_stage0",
-      "y": 270
+      "y": 90
     },
     "facing=west,growth=1": {
       "model": "ore_laundering:block/wall_growth_rack_stage1",
-      "y": 270
+      "y": 90
     },
     "facing=west,growth=2": {
       "model": "ore_laundering:block/wall_growth_rack_stage2",
-      "y": 270
+      "y": 90
     },
     "facing=west,growth=3": {
       "model": "ore_laundering:block/wall_growth_rack_stage3",
-      "y": 270
+      "y": 90
     }
   }
 }
