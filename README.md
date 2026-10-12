@@ -1,35 +1,62 @@
 # Ore Laundering
 
-A Minecraft **26.2 / Fabric** mod about growing counterfeit ore, processing it into dust, and casting usable resources.
+**Minecraft 26.2 · Fabric · Java 25**
 
-## Production loop
+Grow counterfeit copies of vanilla and modded ores, grind the counterfeit material into dust, and use lava to melt dust into molten metal. Cast it directly or store it for later in an ore tank.
 
-1. Put an eligible vanilla or modded **ore block** onto a growth station to establish a renewable culture.
-2. Let the culture mature. Interact with a ripe station to harvest **Counterfeit <Ore>**, or install an auto-harvester to drop harvests into the world automatically.
-3. Feed counterfeit ore into the **Grinder**, which yields material-tagged dust. Grinding upgrades give independent chances for bonus dust.
-4. Feed dust into the **Ore Vat** to cast nuggets, ingots, or blocks (where the loaded game's item registry provides corresponding items).
+## Machines
 
-## Growth stations
+| Machine | How it works |
+|---|---|
+| Wall Growth Rack | Wall-style model, grows one counterfeit ore per cycle before upgrades |
+| Ceiling Growth Rack | Hanging model, grows one counterfeit ore per cycle before upgrades |
+| Grow Trough | Floor model, grows two counterfeit ore per cycle before upgrades |
+| Grinder | One counterfeit ore converts to one dust after two seconds, with possible bonus dust |
+| Ore Vat | Lava-powered furnace: converts one dust into nine molten units |
+| Ore Tank | Stores up to 576 molten units (64 ingots) without consuming fuel |
 
-- **Wall Growth Rack** — mounted on a wall.
-- **Ceiling Growth Rack** — suspended from a ceiling.
-- **Grow Trough** — floor-mounted.
+All three growth blocks show four visual maturity stages. Growth is permanent after seeding (the seed ore is consumed), and only mature growth can be harvested.
 
-Each accepts independent upgrades:
-- **Growth Accelerator**: faster maturation (up to level 3).
-- **Density Matrix**: more counterfeit ore per harvest (up to level 3).
-- **Auto-Harvester**: one installed unit toggles automatic collection; harvests are **dropped on the ground**, so they can be gathered with item collectors.
+## Upgrades
 
-## Grinder upgrades
+| Upgrade | Installed on | Effect |
+|---|---|---|
+| Growth Accelerator | Any growth block | Up to level 3; maturation time is 6000 / (1 + level) ticks |
+| Density Matrix | Any growth block | Up to level 3; +1 counterfeit ore per harvest per level |
+| Auto-Harvester | Any growth block | Automatically harvests mature ore **as item drops on the ground** |
+| Grinding Bit | Grinder | Up to level 3; each bit has an independent 25% chance to produce +1 bonus dust |
 
-**Precision Grinding Bit** (up to level 3) gives each installed bit an independent 25% chance to make an extra unit of dust per counterfeit ore ground.
+Upgrades are installed by right-clicking the matching station with the upgrade item.
 
-## Ore compatibility
+## Player interactions
 
-Counterfeit ore and dust use **one item type each with a per-stack source ore identifier** so third-party ore IDs don't need to be hard-coded into the mod. Ores are detected by conventional ore IDs or the `c:ores` item tag. Casting resolves products by conventional registered item IDs (e.g. `tin_ore` → `tin_ingot`, `tin_nugget`, `tin_block`); gem-like ores can yield their gem instead of ingots. Some unconventional mods may require mapping support.
+1. Craft or place one of the growth structures.
+2. **Right-click with an ore block** (vanilla or from another mod). This consumes one ore and starts the renewable culture.
+3. Wait for its visual growth stages to reach maturity; **right-click with an empty hand** to manually harvest. Install an Auto-Harvester if you'd prefer automatic ground drops.
+4. **Right-click the Grinder with a Counterfeit Ore** to queue grinding. Finished dust drops from the top.
+5. **Right-click the Ore Vat with a lava bucket** to add 2,000 heat units (20 dust smelts). An empty bucket is returned. Each dust smelt uses 100 heat units and adds 9 molten units to the vat.
+6. Insert ore dust into the vat with right-click. Different ore types **cannot mix**.
+7. **Right-click the vat with a Nugget, Ingot, or Block Mold** to consume 1, 9, or 81 molten units respectively and produce the appropriate resource where one exists in the registries.
+8. Place an Ore Tank directly adjacent to a vat, then **sneak + empty-hand right-click** on the vat to pour into the tank. The tank accepts only one material at a time and can itself be right-clicked with molds for later casting.
 
-## Build
+Right-click with an empty hand to view the current machine status on the action bar.
 
-Java 25 required. Using Gradle 9.3+, execute `gradle build` with the dependencies specified in `gradle.properties`. The GitHub Actions workflow also builds and uploads the jar on pushes.
+## Compatibility
 
-This project is under active development; test gameplay in a disposable world while mechanics are being refined.
+- A seed ore item is accepted when its registry path ends in `_ore` or `_ores`, or it belongs to the common item tag `c:ores`. Ancient Debris is also recognized.
+- Counterfeit Ore and Ore Dust retain the source ore registry identifier as a persistent item component. This avoids registering a separate item for every ore added by other mods.
+- Casting currently resolves outputs by conventional IDs, attempting the source mod namespace and then `minecraft`. For example, `copper_ore` casts `copper_nugget`/`copper_ingot`/`copper_block` when available, while `diamond_ore` can cast diamonds and diamond blocks.
+- Mods with unconventional ore names or processing systems may need dedicated mappings. The casting mold reports when an output does not exist rather than consuming the stored material.
+- The initial implementation uses direct player interaction and world drops; machine inventories, hopper transfer, fluid piping, and multi-material tank networks are not yet implemented.
+
+## Building
+
+Build using **Java 25** and **Gradle 9.7**:
+
+```bash
+gradle build
+```
+
+The GitHub Actions [Build Fabric jar](https://github.com/CaszGamerMD/Ore_Laundering/actions/workflows/build.yml) workflow runs the build and provides the compiled mod jar as an artifact when successful.
+
+Currently under active development. Test in a disposable world; this is not yet a production-stable release.
