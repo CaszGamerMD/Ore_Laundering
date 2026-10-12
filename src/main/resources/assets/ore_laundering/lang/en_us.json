@@ -1,0 +1,18 @@
+{
+  "itemGroup.ore_laundering.creative_tab": "Ore Laundering",
+  "item.ore_laundering.counterfeit_ore": "Counterfeit Ore",
+  "item.ore_laundering.ore_dust": "Ore Dust",
+  "item.ore_laundering.growth_accelerator": "Growth Accelerator",
+  "item.ore_laundering.density_matrix": "Density Matrix",
+  "item.ore_laundering.auto_harvester": "Auto Harvester",
+  "item.ore_laundering.grinding_bit": "Grinding Bit",
+  "item.ore_laundering.nugget_mold": "Nugget Mold",
+  "item.ore_laundering.ingot_mold": "Ingot Mold",
+  "item.ore_laundering.block_mold": "Block Mold",
+  "block.ore_laundering.wall_growth_rack": "Wall Growth Rack",
+  "block.ore_laundering.ceiling_growth_rack": "Ceiling Growth Rack",
+  "block.ore_laundering.grow_trough": "Grow Trough",
+  "block.ore_laundering.grinder": "Grinder",
+  "block.ore_laundering.ore_vat": "Ore Vat",
+  "block.ore_laundering.ore_tank": "Ore Tank"
+}
