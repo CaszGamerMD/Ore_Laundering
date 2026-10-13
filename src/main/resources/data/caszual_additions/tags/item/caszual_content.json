@@ -1,0 +1,23 @@
+{
+  "replace": false,
+  "values": [
+    "ore_laundering:wall_growth_rack",
+    "ore_laundering:ceiling_growth_rack",
+    "ore_laundering:grow_trough",
+    "ore_laundering:grinder",
+    "ore_laundering:ore_vat",
+    "ore_laundering:ore_tank",
+    "ore_laundering:lava_tank",
+    "ore_laundering:vat_spout",
+    "ore_laundering:casting_table",
+    "ore_laundering:counterfeit_ore",
+    "ore_laundering:ore_dust",
+    "ore_laundering:growth_accelerator",
+    "ore_laundering:density_matrix",
+    "ore_laundering:auto_harvester",
+    "ore_laundering:grinding_bit",
+    "ore_laundering:nugget_mold",
+    "ore_laundering:ingot_mold",
+    "ore_laundering:block_mold"
+  ]
+}

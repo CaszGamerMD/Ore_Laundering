@@ -1,6 +1,8 @@
 # Ore Laundering
 
-**Minecraft 26.2 · Fabric · Java 25** — currently experimental.
+**Caszual Suite · Minecraft 26.2 · Fabric · Java 25** — currently experimental.
+
+Ore Laundering is a standalone member of the **Caszual Suite**. With Caszual Additions installed, its machines, upgrades, molds, and materials join the shared Caszual creative collection and the **Barrel of Caszual Fun**. Caszual Additions is optional.
 
 Grow counterfeit copies of ore, grind them into dust, melt the dust with lava, and cast ingots, nuggets, and blocks with a physical spout and table.
 

@@ -31,5 +31,8 @@
       "config": "ore_laundering.client.mixins.json",
       "environment": "client"
     }
-  ]
+  ],
+  "suggests": {
+    "caszual_additions": "*"
+  }
 }
