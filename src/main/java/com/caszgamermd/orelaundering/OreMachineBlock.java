@@ -58,6 +58,17 @@ public final class OreMachineBlock extends BaseEntityBlock {
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
         Direction face = context.getClickedFace();
+        if (kind == OreMachines.Kind.SPOUT) {
+            // Face AWAY from a neighboring vat/tank so the small rear pipe
+            // actually enters that machine. Existing spouts re-orient on tick.
+            for (Direction direction : Direction.Plane.HORIZONTAL) {
+                if (context.getLevel().getBlockEntity(context.getClickedPos().relative(direction))
+                        instanceof OreMachineEntity neighbor &&
+                    (neighbor.kind() == OreMachines.Kind.VAT || neighbor.kind() == OreMachines.Kind.TANK)) {
+                    return defaultBlockState().setValue(FACING, direction.getOpposite());
+                }
+            }
+        }
         if (kind == OreMachines.Kind.WALL && face.getAxis().isHorizontal()) {
             return defaultBlockState().setValue(FACING, face);
         }
@@ -88,7 +99,7 @@ public final class OreMachineBlock extends BaseEntityBlock {
         if (kind == OreMachines.Kind.CEILING) return box(1, 7, 1, 15, 16, 15);
         if (kind == OreMachines.Kind.TROUGH) return box(0, 0, 0, 16, 7, 16);
         if (kind == OreMachines.Kind.CASTING) return box(0, 0, 0, 16, 10, 16);
-        if (kind == OreMachines.Kind.SPOUT) return box(3, 3, 3, 13, 13, 13);
+        if (kind == OreMachines.Kind.SPOUT) return box(5, 2, 6, 11, 13, 16);
         if (kind == OreMachines.Kind.WALL) {
             return switch (state.getValue(FACING)) {
                 case NORTH -> box(1, 1, 11, 15, 15, 16);

@@ -130,7 +130,29 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
     }
 
     private void tickSpout() {
-        if (!auto || level == null) return;
+        if (level == null) return;
+        // Align both old and newly placed spouts so the rear socket actually faces
+        // its neighboring vat/tank. This also fixes old worlds without replacement.
+        if (level.getGameTime() % 20 == 0) {
+            Direction supply = null;
+            Direction back = getBlockState().getValue(OreMachineBlock.FACING).getOpposite();
+            if (level.getBlockEntity(worldPosition.relative(back)) instanceof OreMachineEntity candidate
+                    && (candidate.kind() == OreMachines.Kind.VAT || candidate.kind() == OreMachines.Kind.TANK)) {
+                supply = back;
+            } else {
+                for (Direction dir : Direction.Plane.HORIZONTAL) {
+                    if (level.getBlockEntity(worldPosition.relative(dir)) instanceof OreMachineEntity candidate
+                            && (candidate.kind() == OreMachines.Kind.VAT || candidate.kind() == OreMachines.Kind.TANK)) {
+                        supply = dir;
+                        break;
+                    }
+                }
+            }
+            if (supply != null && getBlockState().getValue(OreMachineBlock.FACING) != supply.getOpposite())
+                level.setBlock(worldPosition,
+                    getBlockState().setValue(OreMachineBlock.FACING, supply.getOpposite()), Block.UPDATE_ALL);
+        }
+        if (!auto) return;
         if (!(level.getBlockEntity(worldPosition.below()) instanceof OreMachineEntity receiver)
              || receiver.kind() != OreMachines.Kind.CASTING) return;
         OreMachineEntity source = null;

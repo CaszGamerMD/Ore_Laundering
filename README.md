@@ -13,9 +13,9 @@ Grow counterfeit copies of ore, grind them into dust, melt the dust with lava, a
 | Grow Trough | Floor-grown ore, base yield of two counterfeit ores per cycle |
 | Grinder | Turns counterfeit ore into dust, with bonus yield from Grinding Bit upgrades |
 | Ore Vat | Smelts each dust into a random **300–600 mL** of molten material; needs a lava tank **directly underneath** |
-| Ore Tank | Holds up to **57,600 mL** of one material at a time |
-| Lava Tank | Holds up to **16,000 mB** lava; supply by right-clicking with a lava bucket or the GUI |
-| Vat Spout | Connects beside an Ore Vat or Ore Tank and pours down into the casting table directly below; empty-hand click toggles the stream |
+| Ore Tank | Holds up to **57,600 mL** of one material at a time, with eight visibly changing molten levels |
+| Lava Tank | Holds up to **16,000 mB** lava, with eight visible lava heights; supply with lava buckets or the GUI |
+| Vat Spout | Compact faucet that automatically faces and visibly connects into an adjacent Ore Vat or Ore Tank, pouring into the casting table immediately below; empty-hand click toggles the stream |
 | Casting Table / Basin | Casts ingots or nuggets (table) or blocks (basin). Empty-hand click switches between the shapes **only when entirely empty** |
 
 ## Growth
@@ -29,8 +29,6 @@ Seed with a vanilla/modded ore using right-click or the machine's input slot. Gr
 - **Auto-Harvester:** drops harvests into the world as loose items.
 - **Grinding Bit:** up to three bits; each provides an independent 25% chance of additional dust.
 
-Sneak-empty-hand click a fully grown rack for a manual harvest. Otherwise empty-hand clicking opens its machine GUI.
-
 ## Molten quantities and casting
 
 | Result | Molten material |
@@ -39,7 +37,7 @@ Sneak-empty-hand click a fully grown rack for a manual harvest. Otherwise empty-
 | Ingot | **900 mL** |
 | Block | **8,100 mL** |
 
-The Ore Vat holds **14,400 mL**. Each dust consumes **50 mB** of lava from the tank below and yields a random **300–600 mL**. Different ores cannot mix in the same vat or molten tank.
+The Ore Vat now visibly fills with molten fluid as it processes material, and holds **14,400 mL**. Each dust consumes **50 mB** of lava from the tank below and yields a random **300–600 mL**. Different ores cannot mix in the same vat or molten tank.
 
 To cast, place a **Vat Spout adjacent to the Ore Vat/Ore Tank** and a **Casting Table directly below the spout**. Empty-hand right-click the spout to enable pouring; it fills at **30 mL/tick** and stops when the recipe's capacity is reached. Cooling then takes **30 ticks for nuggets, 80 for ingots, and 160 for blocks**. Collect the finished result from the output slot in the casting table GUI.
 
@@ -62,6 +60,14 @@ An inserted mold is locked during filling/cooling and cannot be swapped mid-cast
 Every block opens a GUI for inventory/contents/status. The Jade tooltip integration is optional and displays a planted ore's name and growth progress when Jade is installed.
 
 The previous direct-cast interface on the vat/tank has been replaced by casting through the spout and physical casting table.
+
+### Machine fluid visuals
+
+- Lava Tanks and Ore Tanks have eight discrete visually rising fill levels; an empty tank displays no artificial fluid cube.
+- Vat interiors also show eight inset molten levels, while casting table/basin contents fill smoothly and cool in place.
+- Molten pools and poured streams use a grayscale ripple texture shaded toward the **actual ingot/block/gem texture's average color** (including compatible modded materials). Fallback colors cover unusual materials.
+- Lava uses the vanilla animated lava sprite. All liquid surfaces are set back from the shell and rim to prevent overlapping faces/z-fighting.
+- Spouts orient toward the adjacent vat/tank automatically, including previously placed ones after a server tick, and render a stream only when a valid transfer can occur.
 
 ## Ore compatibility
 
