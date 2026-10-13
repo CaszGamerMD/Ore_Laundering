@@ -268,7 +268,10 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
                 return;
             }
         }
-        Block.popResourceFromFace(level, worldPosition, Direction.UP, stack);
+        Direction dropFace = kind() == OreMachines.Kind.CEILING ? Direction.DOWN
+            : kind() == OreMachines.Kind.WALL ? getBlockState().getValue(OreMachineBlock.FACING)
+            : Direction.UP;
+        Block.popResourceFromFace(level, worldPosition, dropFace, stack);
     }
 
     private int lavaUnder() {
@@ -381,16 +384,17 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
             else toggleSpout(player);
             return;
         }
-        if (player.isShiftKeyDown()) {
-            if (grows() && !ore.isEmpty() && growthPercent() >= 100) {
-                harvest();
-                notice(player, "Harvested " + OreCompatibility.displayName(ore));
-                return;
-            }
-            if (kind() == OreMachines.Kind.VAT) {
-                pourTank(player);
-                return;
-            }
+        // Mature crystals harvest with a regular empty-hand right click.
+        // Sneak-right-click is reserved for opening the machine GUI.
+        if (grows() && !player.isShiftKeyDown() && !ore.isEmpty() && growthPercent() >= 100) {
+            String harvestedOre = ore;
+            harvest(player);
+            notice(player, "Harvested " + OreCompatibility.displayName(harvestedOre));
+            return;
+        }
+        if (player.isShiftKeyDown() && kind() == OreMachines.Kind.VAT) {
+            pourTank(player);
+            return;
         }
         player.openMenu(this);
     }
@@ -419,9 +423,15 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         notice(player, "Put an Ore Tank beside the vat");
     }
 
-    private void harvest() {
-        output(OreItems.materialStack(OreItems.COUNTERFEIT_ORE, ore,
-            (kind() == OreMachines.Kind.TROUGH ? 2 : 1) + density), true);
+    private void harvest(@Nullable Player harvester) {
+        ItemStack reward = OreItems.materialStack(OreItems.COUNTERFEIT_ORE, ore,
+            (kind() == OreMachines.Kind.TROUGH ? 2 : 1) + density);
+        if (harvester != null) {
+            // Manual harvesting gives the counterfeit ore straight to the player.
+            // Only overflow falls into the world.
+            harvester.addItem(reward);
+        }
+        if (!reward.isEmpty()) output(reward, true);
         progress = 0;
         refreshGrowthStage();
         changed();
@@ -483,7 +493,7 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
                     be.changed();
                 }
             }
-            if (be.progress >= be.growthTime() && be.auto) be.harvest();
+            if (be.progress >= be.growthTime() && be.auto) be.harvest(null);
         } else if (be.kind() == OreMachines.Kind.GRINDER && be.queued > 0) {
             if (++be.progress >= GRINDER_TICKS) {
                 int count = 1;
