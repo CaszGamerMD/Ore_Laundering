@@ -1,62 +1,80 @@
 # Ore Laundering
 
-**Minecraft 26.2 · Fabric · Java 25**
+**Minecraft 26.2 · Fabric · Java 25** — currently experimental.
 
-Grow counterfeit copies of vanilla and modded ores, grind the counterfeit material into dust, and use lava to melt dust into molten metal. Cast it directly or store it for later in an ore tank.
+Grow counterfeit copies of ore, grind them into dust, melt the dust with lava, and cast ingots, nuggets, and blocks with a physical spout and table.
 
 ## Machines
 
-| Machine | How it works |
+| Machine | Function |
 |---|---|
-| Wall Growth Rack | Wall-style model, grows one counterfeit ore per cycle before upgrades |
-| Ceiling Growth Rack | Hanging model, grows one counterfeit ore per cycle before upgrades |
-| Grow Trough | Floor model, grows two counterfeit ore per cycle before upgrades |
-| Grinder | One counterfeit ore converts to one dust after two seconds, with possible bonus dust |
-| Ore Vat | Lava-powered furnace: converts one dust into nine molten units |
-| Ore Tank | Stores up to 576 molten units (64 ingots) without consuming fuel |
+| Wall Growth Rack | Grows counterfeit ore from a permanent consumed ore seed |
+| Ceiling Growth Rack | Grows ore clusters **downward** from the ceiling |
+| Grow Trough | Floor-grown ore, base yield of two counterfeit ores per cycle |
+| Grinder | Turns counterfeit ore into dust, with bonus yield from Grinding Bit upgrades |
+| Ore Vat | Smelts each dust into a random **300–600 mL** of molten material; needs a lava tank **directly underneath** |
+| Ore Tank | Holds up to **57,600 mL** of one material at a time |
+| Lava Tank | Holds up to **16,000 mB** lava; supply by right-clicking with a lava bucket or the GUI |
+| Vat Spout | Connects beside an Ore Vat or Ore Tank and pours down into the casting table directly below; empty-hand click toggles the stream |
+| Casting Table / Basin | Casts ingots or nuggets (table) or blocks (basin). Empty-hand click switches between the shapes **only when entirely empty** |
 
-All three growth blocks show four visual maturity stages. Growth is permanent after seeding (the seed ore is consumed), and only mature growth can be harvested.
+## Growth
 
-## Upgrades
+Seed with a vanilla/modded ore using right-click or the machine's input slot. Growth appears at **5%, 25%, 66%, and 100%** completion. The displayed crystals use material block textures where available (otherwise the source ore texture).
 
-| Upgrade | Installed on | Effect |
-|---|---|---|
-| Growth Accelerator | Any growth block | Up to level 3; maturation time is 6000 / (1 + level) ticks |
-| Density Matrix | Any growth block | Up to level 3; +1 counterfeit ore per harvest per level |
-| Auto-Harvester | Any growth block | Automatically harvests mature ore **as item drops on the ground** |
-| Grinding Bit | Grinder | Up to level 3; each bit has an independent 25% chance to produce +1 bonus dust |
+- **Growth Accelerator:** up to three speed levels; grows in `6000 / (speed level + 1)` ticks.
+- **Density Matrix:** up to three density levels; adds one counterfeit ore per harvest per level.
+- **Auto-Harvester:** drops harvests into the world as loose items.
+- **Grinding Bit:** up to three bits; each provides an independent 25% chance of additional dust.
 
-Upgrades are installed by right-clicking the matching station with the upgrade item.
+Sneak-empty-hand click a fully grown rack for a manual harvest. Otherwise empty-hand clicking opens its machine GUI.
 
-## Player interactions
+## Molten quantities and casting
 
-1. Craft or place one of the growth structures.
-2. **Right-click with an ore block** (vanilla or from another mod). This consumes one ore and starts the renewable culture.
-3. Wait for its visual growth stages to reach maturity; **right-click with an empty hand** to manually harvest. Install an Auto-Harvester if you'd prefer automatic ground drops.
-4. **Right-click the Grinder with a Counterfeit Ore** to queue grinding. Finished dust drops from the top.
-5. **Right-click the Ore Vat with a lava bucket** to add 2,000 heat units (20 dust smelts). An empty bucket is returned. Each dust smelt uses 100 heat units and adds 9 molten units to the vat.
-6. Insert ore dust into the vat with right-click. Different ore types **cannot mix**.
-7. **Right-click the vat with a Nugget, Ingot, or Block Mold** to consume 1, 9, or 81 molten units respectively and produce the appropriate resource where one exists in the registries.
-8. Place an Ore Tank directly adjacent to a vat, then **sneak + empty-hand right-click** on the vat to pour into the tank. The tank accepts only one material at a time and can itself be right-clicked with molds for later casting.
+| Result | Molten material |
+|---|---:|
+| Nugget | **100 mL** |
+| Ingot | **900 mL** |
+| Block | **8,100 mL** |
 
-Right-click with an empty hand to view the current machine status on the action bar.
+The Ore Vat holds **14,400 mL**. Each dust consumes **50 mB** of lava from the tank below and yields a random **300–600 mL**. Different ores cannot mix in the same vat or molten tank.
 
-## Compatibility
+To cast, place a **Vat Spout adjacent to the Ore Vat/Ore Tank** and a **Casting Table directly below the spout**. Empty-hand right-click the spout to enable pouring; it fills at **30 mL/tick** and stops when the recipe's capacity is reached. Cooling then takes **30 ticks for nuggets, 80 for ingots, and 160 for blocks**. Collect the finished result from the output slot in the casting table GUI.
 
-- A seed ore item is accepted when its registry path ends in `_ore` or `_ores`, or it belongs to the common item tag `c:ores`. Ancient Debris is also recognized.
-- Counterfeit Ore and Ore Dust retain the source ore registry identifier as a persistent item component. This avoids registering a separate item for every ore added by other mods.
-- Casting currently resolves outputs by conventional IDs, attempting the source mod namespace and then `minecraft`. For example, `copper_ore` casts `copper_nugget`/`copper_ingot`/`copper_block` when available, while `diamond_ore` can cast diamonds and diamond blocks.
-- Mods with unconventional ore names or processing systems may need dedicated mappings. The casting mold reports when an output does not exist rather than consuming the stored material.
-- The initial implementation uses direct player interaction and world drops; machine inventories, hopper transfer, fluid piping, and multi-material tank networks are not yet implemented.
+The casting table defaults to an ingot recipe (900 mL). Insert a **Nugget Mold** to cast nuggets (100 mL), or an **Ingot Mold** for ingots. Empty-hand right-click the casting table to change to **Basin mode** for 8,100 mL blocks.
 
-## Building
+### Empty-only transformation rule
 
-Build using **Java 25** and **Gradle 9.7**:
+Switching modes is **blocked** until ALL of the following are true:
+
+- The table/basin contains **0 mL** of molten metal.
+- No mold is filling or cooling.
+- Its finished output has been collected.
+- Its input mold slot is empty.
+- No material remains queued in the casting block.
+
+An inserted mold is locked during filling/cooling and cannot be swapped mid-cast. **Sneak + empty-hand right-click** opens the GUI without changing shape. The table's mode persists across saving and loading.
+
+## Machine GUIs and overlay
+
+Every block opens a GUI for inventory/contents/status. The Jade tooltip integration is optional and displays a planted ore's name and growth progress when Jade is installed.
+
+The previous direct-cast interface on the vat/tank has been replaced by casting through the spout and physical casting table.
+
+## Ore compatibility
+
+Ore identifiers are preserved on counterfeit ore and dust item components. Known host-rock prefixes (granite, diorite, andesite, tuff, etc.) are stripped during material output lookup, so many alternate host-rock ores can produce the same ingot/gem/block.
+
+Casting outputs are resolved using registered item names in the source mod's namespace and vanilla Minecraft; not every mod uses conventional names, so some ores may require mappings. **Dynamic examination of mining loot-table drops is not implemented yet.** The mod avoids consuming liquid for unknown casting outputs.
+
+## Development
+
+Build with Java 25 and Gradle 9.7:
 
 ```bash
 gradle build
 ```
 
-The GitHub Actions [Build Fabric jar](https://github.com/CaszGamerMD/Ore_Laundering/actions/workflows/build.yml) workflow runs the build and provides the compiled mod jar as an artifact when successful.
+GitHub Actions [Build Fabric jar](https://github.com/CaszGamerMD/Ore_Laundering/actions/workflows/build.yml) provides the runtime JAR and source JAR after successful compilation.
 
-Currently under active development. Test in a disposable world; this is not yet a production-stable release.
+This is an early mod release. Please test in a disposable world before using it in an important save.
