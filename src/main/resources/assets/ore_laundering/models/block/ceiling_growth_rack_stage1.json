@@ -1,10 +1,10 @@
 {
   "textures": {
-    "particle": "minecraft:block/deepslate_tiles",
-    "steel": "minecraft:block/iron_block",
-    "dark": "minecraft:block/deepslate_tiles",
-    "trim": "minecraft:block/polished_deepslate",
-    "metal": "minecraft:block/copper_block",
+    "particle": "ore_laundering:block/suite/slate",
+    "steel": "ore_laundering:block/suite/steel",
+    "dark": "ore_laundering:block/suite/slate",
+    "trim": "ore_laundering:block/suite/slate",
+    "metal": "ore_laundering:block/suite/copper",
     "soil": "minecraft:block/packed_mud",
     "bud": "minecraft:block/amethyst_block",
     "hot": "minecraft:block/magma_block",
