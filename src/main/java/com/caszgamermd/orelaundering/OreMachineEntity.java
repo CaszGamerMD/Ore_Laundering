@@ -68,6 +68,23 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
 
     public int moltenMl() { return molten; }
 
+    public int lavaMilliBuckets() { return lavaMb; }
+
+    /** The material that can currently flow through this spout, if any. */
+    public String flowingOre() {
+        if (kind() != OreMachines.Kind.SPOUT || !auto || level == null) return "";
+        if (!(level.getBlockEntity(worldPosition.below()) instanceof OreMachineEntity cast)
+                || cast.kind() != OreMachines.Kind.CASTING || cast.cooling > 0
+                || !cast.items.get(1).isEmpty() || cast.molten >= cast.castingTarget()) return "";
+        for (Direction direction : Direction.Plane.HORIZONTAL) {
+            if (level.getBlockEntity(worldPosition.relative(direction)) instanceof OreMachineEntity source
+                    && (source.kind() == OreMachines.Kind.VAT || source.kind() == OreMachines.Kind.TANK)
+                    && source.molten > 0 && !source.ore.isEmpty()
+                    && (cast.ore.isEmpty() || cast.ore.equals(source.ore))) return source.ore;
+        }
+        return "";
+    }
+
     public boolean castingBasin() {
         return kind() == OreMachines.Kind.CASTING && getBlockState().getValue(OreMachineBlock.GROWTH) == 1;
     }
