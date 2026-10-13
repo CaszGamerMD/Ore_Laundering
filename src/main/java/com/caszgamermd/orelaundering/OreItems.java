@@ -72,6 +72,8 @@ public final class OreItems {
                     output.accept(OreMachines.ORE_VAT);
                     output.accept(OreMachines.ORE_TANK);
                     output.accept(OreMachines.LAVA_TANK);
+                    output.accept(OreMachines.VAT_SPOUT);
+                    output.accept(OreMachines.CASTING_TABLE);
                     output.accept(GROWTH_ACCELERATOR);
                     output.accept(DENSITY_MATRIX);
                     output.accept(AUTO_HARVESTER);

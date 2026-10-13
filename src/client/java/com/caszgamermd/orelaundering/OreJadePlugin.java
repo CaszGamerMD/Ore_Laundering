@@ -35,12 +35,17 @@ public final class OreJadePlugin implements IWailaPlugin {
                 switch (machine.kind()) {
                     case GRINDER -> tooltip.add(Component.literal("Queued ore: " + machine.menuData.get(5)));
                     case VAT -> {
-                        tooltip.add(Component.literal("Molten ore: " + amount + " / 144"));
+                        tooltip.add(Component.literal("Molten ore: " + amount + " / 14400 mL"));
                         tooltip.add(Component.literal("Lava below: " + machine.menuData.get(10) + " mB"));
                     }
-                    case TANK -> tooltip.add(Component.literal("Stored molten ore: " + amount + " / 576"));
+                    case TANK -> tooltip.add(Component.literal("Stored molten ore: " + amount + " / 57600 mL"));
                     case LAVA_TANK -> tooltip.add(Component.literal("Stored lava: " +
                         machine.menuData.get(7) + " / 16000 mB"));
+                    case CASTING -> {
+                        tooltip.add(Component.literal(machine.castingBasin() ? "Basin: 8100 mL block" : "Table: 900 mL ingot / 100 mL nugget"));
+                        tooltip.add(Component.literal("Filled: "+amount+" mL"));
+                    }
+                    case SPOUT -> tooltip.add(Component.literal("Spout: "+(machine.menuData.get(15)>0?"Open":"Closed")));
                     default -> {}
                 }
             }

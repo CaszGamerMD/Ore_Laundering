@@ -34,8 +34,11 @@ import org.jetbrains.annotations.Nullable;
 public final class OreMachineEntity extends BlockEntity implements Container, MenuProvider {
     private static final int BASE_GROWTH_TICKS = 6000;
     private static final int GRINDER_TICKS = 40;
-    private static final int VAT_CAPACITY = 144;
-    private static final int TANK_CAPACITY = 576;
+    // All molten inventories are measured in millilitres: nugget 100, ingot 900, block 8100.
+    private static final int VAT_CAPACITY = 14400;
+    private static final int TANK_CAPACITY = 57600;
+    private static final int POUR_RATE = 30; // mL per tick
+    private static final int[] COOLING_TICKS = {30, 80, 160};
     private static final int LAVA_CAPACITY = 16000;
     private static final int LAVA_PER_DUST = 50;
     private static final int[] STAGE_MARKS = {5, 25, 66, 100};
@@ -44,6 +47,7 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
     private final NonNullList<ItemStack> items = NonNullList.withSize(3, ItemStack.EMPTY);
     private String ore = "";
     private int progress, speed, density, grindingBits, queued, molten, lavaMb;
+    private int cooling, castingRecipe; // poured volume is held in molten until output is collected
     private boolean auto;
 
     public OreMachineEntity(BlockPos pos, BlockState state) {
@@ -60,6 +64,106 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
 
     public String plantedOre() {
         return ore;
+    }
+
+    public int moltenMl() { return molten; }
+
+    public boolean castingBasin() {
+        return kind() == OreMachines.Kind.CASTING && getBlockState().getValue(OreMachineBlock.GROWTH) == 1;
+    }
+
+    private int castingTarget() {
+        if (castingBasin()) return 8100;
+        return items.get(0).is(OreItems.NUGGET_MOLD) ? 100 : 900;
+    }
+
+    private boolean castingEmpty() {
+        // All five checks matter: no molten fluid, no cooling, no stored material,
+        // no input mold, and no finished-but-uncollected product.
+        return molten == 0 && cooling == 0 && ore.isEmpty()
+            && items.get(0).isEmpty() && items.get(1).isEmpty();
+    }
+
+    public void toggleCastingMode(Player player) {
+        if (kind() != OreMachines.Kind.CASTING || level == null) return;
+        if (!castingEmpty()) {
+            notice(player, "Empty the casting table and collect its output before switching");
+            player.openMenu(this);
+            return;
+        }
+        BlockState state = getBlockState();
+        int newMode = castingBasin() ? 0 : 1;
+        level.setBlock(worldPosition, state.setValue(OreMachineBlock.GROWTH, newMode), Block.UPDATE_ALL);
+        changed();
+        notice(player, newMode == 1 ? "Casting Basin: 8100 mL blocks" : "Casting Table: 900 mL ingots / 100 mL nuggets");
+    }
+
+    public void toggleSpout(Player player) {
+        if (kind() != OreMachines.Kind.SPOUT) return;
+        auto = !auto;
+        changed();
+        notice(player, auto ? "Spout opened" : "Spout closed");
+    }
+
+    private int acceptPour(String sourceOre, int maxAmount) {
+        if (kind() != OreMachines.Kind.CASTING || sourceOre.isEmpty() ||
+            !items.get(1).isEmpty() || cooling > 0 ||
+            (!ore.isEmpty() && !ore.equals(sourceOre))) return 0;
+        int target = castingTarget();
+        if (OreCompatibility.castingOutput(sourceOre, target) == Items.AIR) return 0;
+        int moved = Math.max(0, Math.min(maxAmount, target - molten));
+        if (moved > 0) {
+            ore = sourceOre;
+            molten += moved;
+            castingRecipe = target;
+            refreshPreview();
+            if (molten >= target) cooling = target == 8100 ? COOLING_TICKS[2] :
+                target == 900 ? COOLING_TICKS[1] : COOLING_TICKS[0];
+            changed();
+        }
+        return moved;
+    }
+
+    private void tickSpout() {
+        if (!auto || level == null) return;
+        if (!(level.getBlockEntity(worldPosition.below()) instanceof OreMachineEntity receiver)
+             || receiver.kind() != OreMachines.Kind.CASTING) return;
+        OreMachineEntity source = null;
+        // Prefer source on the back side of the spout, but accept any horizontal neighboring vat/tank.
+        Direction back = getBlockState().getValue(OreMachineBlock.FACING).getOpposite();
+        Direction[] choices = {back, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+        for (Direction dir : choices) {
+            if (level.getBlockEntity(worldPosition.relative(dir)) instanceof OreMachineEntity neighbor
+                    && (neighbor.kind() == OreMachines.Kind.VAT || neighbor.kind() == OreMachines.Kind.TANK)
+                    && neighbor.molten > 0 && !neighbor.ore.isEmpty()) {
+                source = neighbor;
+                break;
+            }
+        }
+        if (source == null) return;
+        int transferred = receiver.acceptPour(source.ore, Math.min(POUR_RATE, source.molten));
+        if (transferred > 0) {
+            source.molten -= transferred;
+            if (source.molten == 0) source.ore = "";
+            source.refreshPreview();
+            source.changed();
+            if (receiver.cooling > 0) {
+                auto = false; // spout automatically closes once the mold is full
+                changed();
+            }
+        }
+    }
+
+    private void tickCasting() {
+        if (kind() != OreMachines.Kind.CASTING || cooling <= 0 || level == null) return;
+        cooling--;
+        if (cooling == 0) {
+            Item result = OreCompatibility.castingOutput(ore, castingRecipe);
+            if (result != Items.AIR && items.get(1).isEmpty()) {
+                items.set(1, new ItemStack(result));
+                changed();
+            }
+        } else if (cooling % 10 == 0) changed();
     }
 
     public BlockState plantedOreBlock() {
@@ -114,15 +218,18 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
             !OreCompatibility.fromOre(stack).isEmpty();
         return switch (kind()) {
             case GRINDER -> stack.is(OreItems.GRINDING_BIT) || stack.is(OreItems.COUNTERFEIT_ORE);
-            case VAT, TANK -> stack.is(OreItems.ORE_DUST) || moldUnits(stack) > 0;
+            case VAT -> stack.is(OreItems.ORE_DUST);
+            case TANK -> false;
+            case CASTING -> stack.is(OreItems.NUGGET_MOLD) || stack.is(OreItems.INGOT_MOLD);
+            case SPOUT -> false;
             case LAVA_TANK -> stack.is(Items.LAVA_BUCKET);
             default -> false;
         };
     }
 
     private static int moldUnits(ItemStack s) {
-        return s.is(OreItems.NUGGET_MOLD) ? 1 : s.is(OreItems.INGOT_MOLD) ? 9
-            : s.is(OreItems.BLOCK_MOLD) ? 81 : 0;
+        return s.is(OreItems.NUGGET_MOLD) ? 100 : s.is(OreItems.INGOT_MOLD) ? 900
+            : s.is(OreItems.BLOCK_MOLD) ? 8100 : 0;
     }
 
     private static void notice(Player p, String message) {
@@ -233,36 +340,35 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         }
         if (kind() == OreMachines.Kind.VAT && stack.is(OreItems.ORE_DUST)) {
             String src = OreItems.oreOf(stack);
-            if (!src.isEmpty() && (ore.isEmpty() || ore.equals(src))
-                    && molten + 9 <= VAT_CAPACITY && consumeLava(LAVA_PER_DUST)) {
-                ore = src; molten += 9;
-                takeHand(player, stack); changed();
-                notice(player, "Smelted " + OreCompatibility.displayName(ore) + " (molten " + molten + ")");
+            if (!src.isEmpty() && (ore.isEmpty() || ore.equals(src)) && molten <= VAT_CAPACITY-600
+                    && consumeLava(LAVA_PER_DUST)) {
+                int yieldMl = 300 + level.getRandom().nextInt(301);
+                ore = src;
+                molten += yieldMl;
+                takeHand(player, stack);
+                refreshPreview();
+                changed();
+                notice(player, "Smelted " + yieldMl + " mL of " + OreCompatibility.displayName(ore));
             } else notice(player, "Needs matching ore, room and a fueled Lava Tank below");
             return;
         }
-        if (moldUnits(stack) > 0 && (kind() == OreMachines.Kind.VAT || kind() == OreMachines.Kind.TANK))
-            cast(stack, player);
-    }
-
-    private boolean cast(ItemStack mold, @Nullable Player player) {
-        int units = moldUnits(mold);
-        if (units == 0 || molten < units || ore.isEmpty()) return false;
-        Item result = OreCompatibility.castingOutput(ore, units);
-        if (result == Items.AIR) {
-            if (player != null) notice(player, "No compatible casting output");
-            return false;
+        if (kind() == OreMachines.Kind.CASTING && (stack.is(OreItems.NUGGET_MOLD) || stack.is(OreItems.INGOT_MOLD))) {
+            notice(player, "Put the mold in the input slot (only before filling)");
         }
-        molten -= units;
-        output(new ItemStack(result), false);
-        if (molten == 0) ore = "";
-        refreshPreview();
-        changed();
-        return true;
     }
 
     public void interactEmpty(Player player) {
         if (level == null) return;
+        if (kind() == OreMachines.Kind.CASTING) {
+            if (player.isShiftKeyDown() || !player.getMainHandItem().isEmpty()) player.openMenu(this);
+            else toggleCastingMode(player);
+            return;
+        }
+        if (kind() == OreMachines.Kind.SPOUT) {
+            if (player.isShiftKeyDown()) player.openMenu(this);
+            else toggleSpout(player);
+            return;
+        }
         if (player.isShiftKeyDown()) {
             if (grows() && !ore.isEmpty() && growthPercent() >= 100) {
                 harvest();
@@ -332,11 +438,12 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
                 String source = OreItems.oreOf(input);
                 if (input.is(OreItems.ORE_DUST) && !source.isEmpty() &&
                        (ore.isEmpty() || ore.equals(source)) &&
-                       molten + 9 <= VAT_CAPACITY && consumeLava(LAVA_PER_DUST)) {
-                    ore = source; molten += 9; input.shrink(1); changed();
-                } else if (moldUnits(input) > 0) cast(input, null);
+                       molten <= VAT_CAPACITY-600 && consumeLava(LAVA_PER_DUST)) {
+                    ore = source; molten += 300 + level.getRandom().nextInt(301);
+                    input.shrink(1); refreshPreview(); changed();
+                }
             }
-            case TANK -> { if (moldUnits(input) > 0) cast(input, null); }
+            case CASTING, TANK, SPOUT -> { }
             case LAVA_TANK -> {
                 if (input.is(Items.LAVA_BUCKET) && lavaMb + 1000 <= LAVA_CAPACITY
                         && (items.get(1).isEmpty() ||
@@ -354,6 +461,8 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
     public static void tick(Level level, BlockPos pos, BlockState state, OreMachineEntity be) {
         if (level.isClientSide()) return;
         if (level.getGameTime() % 10 == 0) be.processInput();
+        if (be.kind() == OreMachines.Kind.SPOUT) be.tickSpout();
+        if (be.kind() == OreMachines.Kind.CASTING) be.tickCasting();
         if (be.grows() && !be.ore.isEmpty()) {
             if (be.progress < be.growthTime()) {
                 be.progress++;
@@ -392,10 +501,14 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
                         kind() == OreMachines.Kind.TANK ? TANK_CAPACITY : VAT_CAPACITY;
             case 10 -> lavaUnder();
             case 11 -> grows() && !ore.isEmpty() ? 1 : 0;
+            case 12 -> cooling;
+            case 13 -> castingRecipe;
+            case 14 -> castingBasin() ? 1 : 0;
+            case 15 -> kind() == OreMachines.Kind.SPOUT && auto ? 1 : 0;
             default -> 0;
         }; }
         @Override public void set(int i, int value) {}
-        @Override public int getCount() { return 12; }
+        @Override public int getCount() { return 16; }
     };
 
     @Override public Component getDisplayName() {
@@ -412,17 +525,33 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
     @Override public ItemStack removeItem(int slot, int amount) {
         if (slot == 2) return ItemStack.EMPTY;
         ItemStack out = ContainerHelper.removeItem(items, slot, amount);
-        if (!out.isEmpty()) changed();
+        if (!out.isEmpty()) {
+            finishCastingIfCollected(slot);
+            changed();
+        }
         return out;
+    }
+    private void finishCastingIfCollected(int slot) {
+        if (kind() == OreMachines.Kind.CASTING && slot == 1 && items.get(1).isEmpty()
+                && molten > 0 && cooling == 0) {
+            molten = 0;
+            castingRecipe = 0;
+            ore = "";
+            refreshPreview();
+        }
     }
     @Override public ItemStack removeItemNoUpdate(int slot) {
         if (slot == 2) return ItemStack.EMPTY;
-        return ContainerHelper.takeItem(items, slot);
+        ItemStack out = ContainerHelper.takeItem(items, slot);
+        if (!out.isEmpty()) { finishCastingIfCollected(slot); changed(); }
+        return out;
     }
     @Override public void setItem(int slot, ItemStack stack) {
         if (slot == 2) return;
+        if (slot == 0 && kind() == OreMachines.Kind.CASTING && molten > 0) return;
         items.set(slot, stack);
         if (stack.getCount() > getMaxStackSize()) stack.setCount(getMaxStackSize());
+        finishCastingIfCollected(slot);
         changed();
     }
     @Override public boolean stillValid(Player player) {
@@ -433,7 +562,8 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         changed();
     }
     @Override public boolean canPlaceItem(int slot, ItemStack stack) {
-        return slot == 0 && recognizes(stack);
+        return slot == 0 && recognizes(stack) &&
+            (kind() != OreMachines.Kind.CASTING || (molten == 0 && cooling == 0 && items.get(1).isEmpty()));
     }
 
     @Override protected void saveAdditional(ValueOutput output) {
@@ -448,6 +578,8 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         output.putInt("queued", queued);
         output.putInt("molten", molten);
         output.putInt("lava_mb", lavaMb);
+        output.putInt("cooling", cooling);
+        output.putInt("casting_recipe", castingRecipe);
     }
     @Override protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
@@ -461,6 +593,8 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         queued = Math.max(0, input.getIntOr("queued", 0));
         molten = Math.max(0, input.getIntOr("molten", 0));
         lavaMb = Math.max(0, input.getIntOr("lava_mb", 0));
+        cooling = Math.max(0, input.getIntOr("cooling", 0));
+        castingRecipe = Math.max(0, input.getIntOr("casting_recipe", 0));
         refreshPreview();
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider lookup) {

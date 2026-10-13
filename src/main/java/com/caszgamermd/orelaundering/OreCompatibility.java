@@ -47,12 +47,16 @@ public final class OreCompatibility {
         Identifier origin = Identifier.tryParse(ore);
         if (origin == null) return Items.AIR;
         String path = origin.getPath().replaceFirst("^(deepslate_|nether_|end_)", "");
+        // Support host-rock variants such as granite_diamond_ore and tuff_iron_ore.
+        // Explicit loot-table analysis will handle ambiguous modded names separately.
+        path = path.replaceFirst("^(granite|diorite|andesite|tuff|stone|blackstone|basalt|netherrack|calcite)_", "");
+        path = path.replaceFirst("_(granite|diorite|andesite|tuff|stone|blackstone|basalt|netherrack|calcite)_ore$", "_ore");
         if (path.endsWith("_ore")) path = path.substring(0, path.length() - 4);
         if (path.equals("ancient_debris")) path = "netherite_scrap";
-        String suffix = units == 1 ? "_nugget" : units == 9 ? "_ingot" : "_block";
+        String suffix = units == 100 ? "_nugget" : units == 900 ? "_ingot" : "_block";
         List<String> candidatePaths = new ArrayList<>();
         candidatePaths.add(path + suffix);
-        if (units == 9) {
+        if (units == 900) {
             candidatePaths.add(path); // gemstones, e.g. minecraft:diamond
             if (path.equals("lapis")) candidatePaths.add("lapis_lazuli");
         }

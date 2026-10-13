@@ -58,17 +58,28 @@ public final class OreMachineScreen extends AbstractContainerScreen<OreMachineMe
             label(g,"Queue: "+menu.value(5)+"  Precision: "+menu.value(4)+"/3",10,72,TEXT);
             bar(g,10,84,menu.value(5),64,0xffd3a65f);
         } else if (kind==OreMachines.Kind.VAT.ordinal()) {
-            label(g,"Molten ore: "+menu.value(6)+" / 144 units",10,72,TEXT);
-            bar(g,10,84,menu.value(6),144,0xfff0aa55);
+            label(g,"Molten ore: "+menu.millilitres(6)+" / 14400 mL",10,72,TEXT);
+            bar(g,10,84,menu.millilitres(6),14400,0xfff0aa55);
             label(g,menu.value(10)>0?"Lava below: "+menu.value(10)+" mB":"LAVA TANK REQUIRED BELOW",10,91,MUTED);
         } else if (kind==OreMachines.Kind.TANK.ordinal()) {
-            label(g,"Stored ore: "+menu.value(6)+" / 576 units",10,72,TEXT);
-            bar(g,10,84,menu.value(6),576,0xffd4b174);
-        } else {
+            label(g,"Stored ore: "+menu.millilitres(6)+" / 57600 mL",10,72,TEXT);
+            bar(g,10,84,menu.millilitres(6),57600,0xffd4b174);
+        } else if (kind==OreMachines.Kind.LAVA_TANK.ordinal()) {
             label(g,"Lava: "+menu.value(7)+" / 16000 mB",10,72,TEXT);
             bar(g,10,84,menu.value(7),16000,0xffe46c32);
+        } else if (kind==OreMachines.Kind.SPOUT.ordinal()) {
+            label(g,menu.value(15)==1?"Spout: POURING ENABLED":"Spout: CLOSED",10,72,TEXT);
+            label(g,"Empty-hand use to open or close",10,84,MUTED);
+        } else if (kind==OreMachines.Kind.CASTING.ordinal()) {
+            int held=menu.millilitres(6);
+            int target=menu.value(14)==1?8100:(menu.value(13)>0?menu.value(13):900);
+            String mode=menu.value(14)==1?"BASIN (BLOCK)":"TABLE (INGOT/NUGGET)";
+            label(g,mode,10,71,TEXT);
+            label(g,"Molten: "+held+" / "+target+" mL",10,81,MUTED);
+            bar(g,10,93,held,target,0xfff0aa55);
+            if(menu.value(12)>0) label(g,"Cooling: "+menu.value(12)+" ticks",10,101,TEXT);
         }
-        label(g,"Drop input into left slot; collect output at right.",8,196,MUTED);
+        label(g,"Input     |    Material    |    Output",8,196,MUTED);
     }
 
     @Override protected void extractLabels(GuiGraphicsExtractor g, int mouseX, int mouseY) {

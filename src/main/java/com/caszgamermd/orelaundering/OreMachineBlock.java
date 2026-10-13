@@ -87,6 +87,8 @@ public final class OreMachineBlock extends BaseEntityBlock {
     protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         if (kind == OreMachines.Kind.CEILING) return box(1, 7, 1, 15, 16, 15);
         if (kind == OreMachines.Kind.TROUGH) return box(0, 0, 0, 16, 7, 16);
+        if (kind == OreMachines.Kind.CASTING) return box(0, 0, 0, 16, 10, 16);
+        if (kind == OreMachines.Kind.SPOUT) return box(3, 3, 3, 13, 13, 13);
         if (kind == OreMachines.Kind.WALL) {
             return switch (state.getValue(FACING)) {
                 case NORTH -> box(1, 1, 11, 15, 15, 16);

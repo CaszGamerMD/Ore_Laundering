@@ -15,13 +15,13 @@ public final class OreMachineMenu extends AbstractContainerMenu {
     private final ContainerData values;
 
     public OreMachineMenu(int id, Inventory player) {
-        this(id, player, new SimpleContainer(3), new SimpleContainerData(12));
+        this(id, player, new SimpleContainer(3), new SimpleContainerData(16));
     }
 
     public OreMachineMenu(int id, Inventory player, Container container, ContainerData data) {
         super(OreMenus.MACHINE, id);
         checkContainerSize(container, 3);
-        checkContainerDataCount(data, 12);
+        checkContainerDataCount(data, 16);
         this.container = container;
         this.values = data;
         // Three primary slots: input, output, and a read-only sample of the source ore.
@@ -41,6 +41,7 @@ public final class OreMachineMenu extends AbstractContainerMenu {
     }
 
     public int value(int index) { return values.get(index); }
+    public int millilitres(int index) { return values.get(index) & 0xffff; }
 
     @Override public ItemStack quickMoveStack(Player player, int slotIndex) {
         if (slotIndex == 2 || slotIndex < 0 || slotIndex >= slots.size()) return ItemStack.EMPTY;
