@@ -66,7 +66,7 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
             if (state.kind == OreMachines.Kind.WALL) {
                 cy=.20f+row*.28f; cz=.47f;
             } else if (state.kind == OreMachines.Kind.CEILING) {
-                cy=.59f+Math.min(row,2)*.055f; cz=.20f+row*.30f;
+                cy=.54f-Math.min(row,2)*.095f; cz=.20f+row*.30f;
             } else {
                 cy=.28f+Math.min(row,2)*.05f; cz=.20f+row*.30f;
             }
