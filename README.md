@@ -20,7 +20,9 @@ Grow counterfeit copies of ore, grind them into dust, melt the dust with lava, a
 
 ## Growth
 
-Seed with a vanilla/modded ore using right-click or the machine's input slot. Growth appears at **5%, 25%, 66%, and 100%** completion. The displayed crystals use material block textures where available (otherwise the source ore texture).
+Seed with a vanilla/modded ore using right-click or the machine's input slot. Growth appears at **5%, 25%, 66%, and 100%** completion. The displayed ore is rendered as **faceted, pointed crystal shards** using the material block's texture where available (otherwise the source ore texture), not miniature full-size cubes. Ceiling-rack shards begin embedded in the underside of the iron plate and grow down; wall racks grow outward; troughs grow upward.
+
+**Manual harvesting:** At 100% growth, **right-click with an empty hand** to collect Counterfeit Ore directly into your inventory. Any overflow falls into the world. **Sneak-right-click** to open the rack's GUI instead. Auto-Harvester harvests still fall into the world (below a ceiling tray, outward from a wall rack). Once seeded, a rack keeps reproducing the same ore after each harvest.
 
 - **Growth Accelerator:** up to three speed levels; grows in `6000 / (speed level + 1)` ticks.
 - **Density Matrix:** up to three density levels; adds one counterfeit ore per harvest per level.
