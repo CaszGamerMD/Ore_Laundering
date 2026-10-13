@@ -258,9 +258,6 @@
         },
         "up": {
           "texture": "#steel"
-        },
-        "down": {
-          "texture": "#steel"
         }
       }
     },
@@ -289,9 +286,6 @@
           "texture": "#steel"
         },
         "up": {
-          "texture": "#steel"
-        },
-        "down": {
           "texture": "#steel"
         }
       }
@@ -322,9 +316,6 @@
         },
         "up": {
           "texture": "#steel"
-        },
-        "down": {
-          "texture": "#steel"
         }
       }
     },
@@ -353,9 +344,6 @@
           "texture": "#steel"
         },
         "up": {
-          "texture": "#steel"
-        },
-        "down": {
           "texture": "#steel"
         }
       }
