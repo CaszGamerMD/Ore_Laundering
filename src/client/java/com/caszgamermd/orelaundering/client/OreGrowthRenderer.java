@@ -20,6 +20,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEntity, OreGrowthRenderer.State> {
@@ -34,8 +36,14 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
         BlockEntityRenderer.super.extractRenderState(be, state, tickDelta, cameraPos, crumbling);
         state.kind = be.kind();
         state.stage = be.growthStage();
+        state.molten = be.moltenMl();
+        state.target = be.menuData.get(13);
+        state.basin = be.castingBasin();
+        state.spoutOpen = be.menuData.get(15) == 1;
         state.facing = be.getBlockState().getValue(OreMachineBlock.FACING);
-        BlockState ore = be.grows() ? be.plantedOreBlock() : Blocks.AIR.defaultBlockState();
+        BlockState ore = be.grows() ? be.crystalBlock()
+            : (be.kind() == OreMachines.Kind.CASTING || be.kind() == OreMachines.Kind.SPOUT
+                ? Blocks.MAGMA_BLOCK.defaultBlockState() : Blocks.AIR.defaultBlockState());
         if (ore != state.cachedOre) {
             state.material.clear();
             if (!ore.isAir()) resolver.update(state.material, ore, BlockDisplayContext.create());
@@ -45,8 +53,31 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
 
     @Override public void submit(State state, PoseStack pose, SubmitNodeCollector collector,
             CameraRenderState cameraState) {
-        if (state.stage <= 0 || state.material.isEmpty() || state.kind == null ||
-                state.kind.ordinal() > OreMachines.Kind.TROUGH.ordinal()) return;
+        if (state.kind == null || state.material.isEmpty()) return;
+        if (state.kind == OreMachines.Kind.CASTING) {
+            if (state.molten == 0) return;
+            pose.pushPose();
+            float ratio = Math.min(1, (float)state.molten / (float)Math.max(100, state.basin ? 8100 : (state.target == 100 ? 100 : 900)));
+            float width = state.basin ? .69f : .56f;
+            float height = state.basin ? (.04f + ratio * .38f) : (.03f + ratio * .06f);
+            pose.translate((1-width)/2f, state.basin ? .32f : .45f, (1-width)/2f);
+            pose.scale(width,height,width);
+            state.material.submit(pose,collector,state.lightCoords,OverlayTexture.NO_OVERLAY,
+                EntityRenderState.NO_OUTLINE);
+            pose.popPose();
+            return;
+        }
+        if (state.kind == OreMachines.Kind.SPOUT) {
+            if (!state.spoutOpen) return;
+            pose.pushPose();
+            pose.translate(.46f,-.54f,.56f);
+            pose.scale(.08f,.78f,.08f);
+            state.material.submit(pose,collector,state.lightCoords,OverlayTexture.NO_OVERLAY,
+                EntityRenderState.NO_OUTLINE);
+            pose.popPose();
+            return;
+        }
+        if (state.stage <= 0 || state.kind.ordinal() > OreMachines.Kind.TROUGH.ordinal()) return;
         pose.pushPose();
         if (state.kind == OreMachines.Kind.WALL) {
             pose.translate(.5,0,.5);
@@ -80,11 +111,17 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
         pose.popPose();
     }
 
+    @Override public AABB getRenderBoundingBox(OreMachineEntity be) {
+        BlockPos p = be.getBlockPos();
+        return new AABB(p.getX(), p.getY()-1, p.getZ(), p.getX()+1, p.getY()+1, p.getZ()+1);
+    }
+
     public static final class State extends BlockEntityRenderState {
         public final BlockModelRenderState material = new BlockModelRenderState();
         public BlockState cachedOre = Blocks.AIR.defaultBlockState();
         public OreMachines.Kind kind;
-        public int stage;
+        public int stage, molten, target;
+        public boolean basin, spoutOpen;
         public Direction facing = Direction.NORTH;
     }
 }

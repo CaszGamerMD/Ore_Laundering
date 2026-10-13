@@ -171,6 +171,13 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         } else if (cooling % 10 == 0) changed();
     }
 
+    public BlockState crystalBlock() {
+        if (!grows() || ore.isEmpty()) return Blocks.AIR.defaultBlockState();
+        Item item = OreCompatibility.castingOutput(ore, 8100);
+        if (item instanceof BlockItem blockItem) return blockItem.getBlock().defaultBlockState();
+        return plantedOreBlock();
+    }
+
     public BlockState plantedOreBlock() {
         Identifier id = Identifier.tryParse(ore);
         if (id != null && BuiltInRegistries.ITEM.containsKey(id)) {
