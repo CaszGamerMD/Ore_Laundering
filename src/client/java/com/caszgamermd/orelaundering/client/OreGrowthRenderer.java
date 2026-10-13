@@ -6,6 +6,10 @@ import com.caszgamermd.orelaundering.OreMachines;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.block.BlockModelRenderState;
 import net.minecraft.client.renderer.block.BlockModelResolver;
 import net.minecraft.client.renderer.block.model.BlockDisplayContext;
@@ -42,6 +46,9 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
         BlockState ore = be.grows() ? be.crystalBlock()
             : (be.kind() == OreMachines.Kind.CASTING || be.kind() == OreMachines.Kind.SPOUT
                 ? Blocks.MAGMA_BLOCK.defaultBlockState() : Blocks.AIR.defaultBlockState());
+        state.crystalSprite = be.grows() && !ore.isAir()
+            ? Minecraft.getInstance().getModelManager().getBlockStateModelSet().getParticleMaterial(ore).sprite()
+            : null;
         if (ore != state.cachedOre) {
             state.material.clear();
             if (!ore.isAir()) resolver.update(state.material, ore, BlockDisplayContext.create());
@@ -51,9 +58,9 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
 
     @Override public void submit(State state, PoseStack pose, SubmitNodeCollector collector,
             CameraRenderState cameraState) {
-        if (state.kind == null || state.material.isEmpty()) return;
+        if (state.kind == null) return;
         if (state.kind == OreMachines.Kind.CASTING) {
-            if (state.molten == 0) return;
+            if (state.molten == 0 || state.material.isEmpty()) return;
             pose.pushPose();
             float ratio = Math.min(1, (float)state.molten / (float)Math.max(100, state.basin ? 8100 : (state.target == 100 ? 100 : 900)));
             float width = state.basin ? .69f : .56f;
@@ -66,7 +73,7 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
             return;
         }
         if (state.kind == OreMachines.Kind.SPOUT) {
-            if (!state.spoutOpen) return;
+            if (!state.spoutOpen || state.material.isEmpty()) return;
             pose.pushPose();
             pose.translate(.46f,-.54f,.56f);
             pose.scale(.08f,.78f,.08f);
@@ -75,37 +82,29 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
             pose.popPose();
             return;
         }
-        if (state.stage <= 0 || state.kind.ordinal() > OreMachines.Kind.TROUGH.ordinal()) return;
+        // Crystal meshes are NOT scaled ore cubes. Only the selected ore's
+        // material sprite is used; the pointed faceted shard mesh is our own.
+        if (state.stage <= 0 || state.crystalSprite == null
+                || state.kind.ordinal() > OreMachines.Kind.TROUGH.ordinal()) return;
+        final OreMachines.Kind growthKind = state.kind;
+        final int growthStage = state.stage;
+        final int light = state.lightCoords;
+        final TextureAtlasSprite sprite = state.crystalSprite;
         pose.pushPose();
-        if (state.kind == OreMachines.Kind.WALL) {
+        if (growthKind == OreMachines.Kind.WALL) {
+            // Align wall-crystal roots with the rotated backplate.
             pose.translate(.5,0,.5);
             pose.mulPose(Axis.YP.rotationDegrees(switch (state.facing) {
                 case NORTH -> 180; case EAST -> 270; case SOUTH -> 0; default -> 90;
             }));
             pose.translate(-.5,0,-.5);
         }
-        // Each discrete stage increases coverage of clusters, with no intersecting
-        // geometry or coplanar surfaces. The actual modded/vanilla block model is used.
-        int count = switch (state.stage) { case 1 -> 1; case 2 -> 3; case 3 -> 6; default -> 9; };
-        float size = switch (state.stage) { case 1 -> .13f; case 2 -> .19f; case 3 -> .22f; default -> .23f; };
-        for (int i=0;i<count;i++) {
-            int x = i % 3, row = i / 3;
-            float cx=.20f+x*.30f;
-            float cy, cz;
-            if (state.kind == OreMachines.Kind.WALL) {
-                cy=.20f+row*.28f; cz=.47f;
-            } else if (state.kind == OreMachines.Kind.CEILING) {
-                cy=.54f-Math.min(row,2)*.095f; cz=.20f+row*.30f;
-            } else {
-                cy=.28f+Math.min(row,2)*.05f; cz=.20f+row*.30f;
-            }
-            pose.pushPose();
-            pose.translate(cx-size/2f,cy,cz-size/2f);
-            pose.scale(size,size,size);
-            state.material.submit(pose,collector,state.lightCoords,OverlayTexture.NO_OVERLAY,
-                EntityRenderState.NO_OUTLINE);
-            pose.popPose();
-        }
+        // submitCustomGeometry executes after submit() returns: capture immutable
+        // stage/sprite/kind/light values and use only the supplied Pose snapshot.
+        collector.submitCustomGeometry(pose,
+            RenderTypes.entityCutout(TextureAtlas.LOCATION_BLOCKS),
+            (snapshot, vertices) -> OreCrystalMesh.render(
+                snapshot, vertices, sprite, light, growthKind, growthStage));
         pose.popPose();
     }
 
@@ -116,5 +115,6 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
         public int stage, molten, target;
         public boolean basin, spoutOpen;
         public Direction facing = Direction.NORTH;
+        public TextureAtlasSprite crystalSprite;
     }
 }
