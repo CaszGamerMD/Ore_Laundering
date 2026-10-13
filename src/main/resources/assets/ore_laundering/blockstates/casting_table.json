@@ -1,0 +1,84 @@
+{
+  "variants": {
+    "facing=north,growth=0": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 0
+    },
+    "facing=north,growth=1": {
+      "model": "ore_laundering:block/casting_basin",
+      "y": 0
+    },
+    "facing=north,growth=2": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 0
+    },
+    "facing=north,growth=3": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 0
+    },
+    "facing=north,growth=4": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 0
+    },
+    "facing=east,growth=0": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 90
+    },
+    "facing=east,growth=1": {
+      "model": "ore_laundering:block/casting_basin",
+      "y": 90
+    },
+    "facing=east,growth=2": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 90
+    },
+    "facing=east,growth=3": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 90
+    },
+    "facing=east,growth=4": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 90
+    },
+    "facing=south,growth=0": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 180
+    },
+    "facing=south,growth=1": {
+      "model": "ore_laundering:block/casting_basin",
+      "y": 180
+    },
+    "facing=south,growth=2": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 180
+    },
+    "facing=south,growth=3": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 180
+    },
+    "facing=south,growth=4": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 180
+    },
+    "facing=west,growth=0": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 270
+    },
+    "facing=west,growth=1": {
+      "model": "ore_laundering:block/casting_basin",
+      "y": 270
+    },
+    "facing=west,growth=2": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 270
+    },
+    "facing=west,growth=3": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 270
+    },
+    "facing=west,growth=4": {
+      "model": "ore_laundering:block/casting_table",
+      "y": 270
+    }
+  }
+}

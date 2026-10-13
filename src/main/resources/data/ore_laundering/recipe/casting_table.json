@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "III",
+    "S S",
+    "S S"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "S": "minecraft:smooth_stone"
+  },
+  "result": {
+    "id": "ore_laundering:casting_table",
+    "count": 1
+  }
+}

@@ -14,5 +14,8 @@
   "block.ore_laundering.grow_trough": "Grow Trough",
   "block.ore_laundering.grinder": "Grinder",
   "block.ore_laundering.ore_vat": "Ore Vat",
-  "block.ore_laundering.ore_tank": "Ore Tank"
+  "block.ore_laundering.ore_tank": "Ore Tank",
+  "block.ore_laundering.vat_spout": "Vat Spout",
+  "block.ore_laundering.casting_table": "Casting Table / Basin",
+  "block.ore_laundering.lava_tank": "Lava Tank"
 }
