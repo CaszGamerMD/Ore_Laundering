@@ -20,8 +20,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEntity, OreGrowthRenderer.State> {
@@ -109,11 +107,6 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
             pose.popPose();
         }
         pose.popPose();
-    }
-
-    @Override public AABB getRenderBoundingBox(OreMachineEntity be) {
-        BlockPos p = be.getBlockPos();
-        return new AABB(p.getX(), p.getY()-1, p.getZ(), p.getX()+1, p.getY()+1, p.getZ()+1);
     }
 
     public static final class State extends BlockEntityRenderState {
