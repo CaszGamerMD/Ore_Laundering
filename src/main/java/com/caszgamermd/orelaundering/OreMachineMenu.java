@@ -27,6 +27,9 @@ public final class OreMachineMenu extends AbstractContainerMenu {
         // Three primary slots: input, output, and a read-only sample of the source ore.
         addSlot(new Slot(container, 0, 44, 48) {
             @Override public boolean mayPlace(ItemStack stack) { return container.canPlaceItem(0, stack); }
+            @Override public boolean mayPickup(Player player) {
+                return !(container instanceof OreMachineEntity machine) || machine.canChangeCastingMold();
+            }
         });
         addSlot(new Slot(container, 1, 116, 48) {
             @Override public boolean mayPlace(ItemStack stack) { return false; }

@@ -77,6 +77,11 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         return items.get(0).is(OreItems.NUGGET_MOLD) ? 100 : 900;
     }
 
+    public boolean canChangeCastingMold() {
+        return kind() != OreMachines.Kind.CASTING ||
+            (molten == 0 && cooling == 0 && items.get(1).isEmpty());
+    }
+
     private boolean castingEmpty() {
         // All five checks matter: no molten fluid, no cooling, no stored material,
         // no input mold, and no finished-but-uncollected product.
@@ -523,7 +528,7 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
     @Override public boolean isEmpty() { return items.get(0).isEmpty() && items.get(1).isEmpty(); }
     @Override public ItemStack getItem(int index) { return items.get(index); }
     @Override public ItemStack removeItem(int slot, int amount) {
-        if (slot == 2) return ItemStack.EMPTY;
+        if (slot == 2 || (slot == 0 && !canChangeCastingMold())) return ItemStack.EMPTY;
         ItemStack out = ContainerHelper.removeItem(items, slot, amount);
         if (!out.isEmpty()) {
             finishCastingIfCollected(slot);
@@ -541,14 +546,14 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         }
     }
     @Override public ItemStack removeItemNoUpdate(int slot) {
-        if (slot == 2) return ItemStack.EMPTY;
+        if (slot == 2 || (slot == 0 && !canChangeCastingMold())) return ItemStack.EMPTY;
         ItemStack out = ContainerHelper.takeItem(items, slot);
         if (!out.isEmpty()) { finishCastingIfCollected(slot); changed(); }
         return out;
     }
     @Override public void setItem(int slot, ItemStack stack) {
         if (slot == 2) return;
-        if (slot == 0 && kind() == OreMachines.Kind.CASTING && molten > 0) return;
+        if (slot == 0 && !canChangeCastingMold()) return;
         items.set(slot, stack);
         if (stack.getCount() > getMaxStackSize()) stack.setCount(getMaxStackSize());
         finishCastingIfCollected(slot);
@@ -563,7 +568,7 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
     }
     @Override public boolean canPlaceItem(int slot, ItemStack stack) {
         return slot == 0 && recognizes(stack) &&
-            (kind() != OreMachines.Kind.CASTING || (molten == 0 && cooling == 0 && items.get(1).isEmpty()));
+            canChangeCastingMold();
     }
 
     @Override protected void saveAdditional(ValueOutput output) {
