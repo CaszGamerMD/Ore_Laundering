@@ -63,6 +63,7 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
             state.crystalSprite=null;
         }
         if (be.kind()==OreMachines.Kind.SPOUT) {
+            state.streamDistance=be.streamDropDistance();
             state.streamOre=be.flowingOre();
         } else {
             state.streamOre="";
@@ -72,7 +73,10 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
         // Resource packs may remove a custom atlas entry: degrade to a known
         // vanilla fluid sprite rather than exposing a magenta checkerboard.
         if(state.fluidSprite==null || !(lava?LAVA_SPRITE:MOLTEN_SPRITE).equals(state.fluidSprite.contents().name()))
-            state.fluidSprite=blockAtlas.getSprite(LAVA_SPRITE);
+            // Lava as a molten fallback overwrites the real material color.
+            // Use neutral white instead so every metal retains its sampled tint.
+            state.fluidSprite=blockAtlas.getSprite(lava ? LAVA_SPRITE :
+                Identifier.withDefaultNamespace("block/white_concrete"));
         state.tint=lava ? 0xffffffff : OreFluidTint.fromMaterial(
             be.kind()==OreMachines.Kind.SPOUT ? state.streamOre : be.plantedOre());
     }
@@ -83,10 +87,10 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
         if(state.kind==OreMachines.Kind.SPOUT) {
             if(state.streamOre.isEmpty()) return;
             final TextureAtlasSprite sprite=state.fluidSprite;
-            final int tint=state.tint,light=state.lightCoords;
+            final int tint=state.tint,light=state.lightCoords,drop=state.streamDistance;
             final float age=state.age;
             collector.submitCustomGeometry(pose,RenderTypes.entityTranslucent(TextureAtlas.LOCATION_BLOCKS),
-                (snap,out)->OreFluidMesh.drawStream(snap,out,sprite,light,tint,age));
+                (snap,out)->OreFluidMesh.drawStream(snap,out,sprite,light,tint,age,drop));
             return;
         }
         if(state.kind==OreMachines.Kind.LAVA_TANK || state.kind==OreMachines.Kind.TANK
@@ -126,7 +130,7 @@ public final class OreGrowthRenderer implements BlockEntityRenderer<OreMachineEn
         Direction facing=Direction.NORTH;
         TextureAtlasSprite fluidSprite,crystalSprite;
         String streamOre="";
-        int stage,fill,capacity,tint;
+        int stage,fill,capacity,tint,streamDistance;
         boolean basin;
         float age;
     }

@@ -52,6 +52,8 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
 
     public OreMachineEntity(BlockPos pos, BlockState state) {
         super(OreMachines.BLOCK_ENTITY, pos, state);
+        // A newly placed spout starts open; an empty vat still won't pour.
+        this.auto = kind() == OreMachines.Kind.SPOUT;
     }
 
     public OreMachines.Kind kind() {
@@ -70,19 +72,51 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
 
     public int lavaMilliBuckets() { return lavaMb; }
 
-    /** The material that can currently flow through this spout, if any. */
-    public String flowingOre() {
-        if (kind() != OreMachines.Kind.SPOUT || !auto || level == null) return "";
-        if (!(level.getBlockEntity(worldPosition.below()) instanceof OreMachineEntity cast)
-                || cast.kind() != OreMachines.Kind.CASTING || cast.cooling > 0
-                || !cast.items.get(1).isEmpty() || cast.molten >= cast.castingTarget()) return "";
+    /** The casting mold 1 or 2 blocks below an outlet. */
+    private @Nullable OreMachineEntity castingReceiver() {
+        if (level == null || kind() != OreMachines.Kind.SPOUT) return null;
+        for (int distance = 1; distance <= 2; distance++) {
+            if (level.getBlockEntity(worldPosition.below(distance)) instanceof OreMachineEntity cast
+                    && cast.kind() == OreMachines.Kind.CASTING) {
+                // A two-block pour must have open air between spout and mold.
+                if (distance == 1 || level.getBlockState(worldPosition.below()).isAir()) return cast;
+            }
+        }
+        return null;
+    }
+
+    /** Choose the connected side of the faucet before examining other sides. */
+    private @Nullable OreMachineEntity moltenSource() {
+        if (level == null || kind() != OreMachines.Kind.SPOUT) return null;
+        Direction back = getBlockState().getValue(OreMachineBlock.FACING).getOpposite();
+        if (level.getBlockEntity(worldPosition.relative(back)) instanceof OreMachineEntity source
+                && (source.kind() == OreMachines.Kind.VAT || source.kind() == OreMachines.Kind.TANK)
+                && source.molten > 0 && !source.ore.isEmpty()) return source;
         for (Direction direction : Direction.Plane.HORIZONTAL) {
+            if (direction == back) continue;
             if (level.getBlockEntity(worldPosition.relative(direction)) instanceof OreMachineEntity source
                     && (source.kind() == OreMachines.Kind.VAT || source.kind() == OreMachines.Kind.TANK)
-                    && source.molten > 0 && !source.ore.isEmpty()
-                    && (cast.ore.isEmpty() || cast.ore.equals(source.ore))) return source.ore;
+                    && source.molten > 0 && !source.ore.isEmpty()) return source;
         }
-        return "";
+        return null;
+    }
+
+    public int streamDropDistance() {
+        OreMachineEntity receiver = castingReceiver();
+        return receiver == null ? 1 : Math.max(1, worldPosition.getY() - receiver.worldPosition.getY());
+    }
+
+    /** Render the flow only when the faucet truly can move molten material. */
+    public String flowingOre() {
+        if (kind() != OreMachines.Kind.SPOUT || !auto) return "";
+        OreMachineEntity source = moltenSource(), cast = castingReceiver();
+        if (source == null || cast == null) return "";
+        String src = OreCompatibility.canonical(source.ore);
+        if (cast.cooling > 0 || !cast.items.get(1).isEmpty()
+                || cast.molten >= cast.castingTarget()
+                || (!cast.ore.isEmpty() && !OreCompatibility.canonical(cast.ore).equals(src))
+                || OreCompatibility.castingOutput(src,cast.castingTarget()) == Items.AIR) return "";
+        return src;
     }
 
     public boolean castingBasin() {
@@ -124,18 +158,28 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         if (kind() != OreMachines.Kind.SPOUT) return;
         auto = !auto;
         changed();
-        notice(player, auto ? "Spout opened" : "Spout closed");
+        if (!auto) { notice(player,"Spout closed"); return; }
+        OreMachineEntity source=moltenSource(), receiver=castingReceiver();
+        if (source == null) notice(player,"Spout open: connect an Ore Vat/Tank with molten material");
+        else if (receiver == null) notice(player,"Spout open: place a Casting Table 1-2 blocks below");
+        else if (OreCompatibility.castingOutput(source.ore,receiver.castingTarget()) == Items.AIR)
+            notice(player,"No casting output for this material and mold (try ingot or basin)");
+        else if (receiver.cooling > 0 || !receiver.items.get(1).isEmpty())
+            notice(player,"Spout waiting for cooling or collected output");
+        else notice(player,"Spout pouring when the mold has room");
     }
 
     private int acceptPour(String sourceOre, int maxAmount) {
         if (kind() != OreMachines.Kind.CASTING || sourceOre.isEmpty() ||
             !items.get(1).isEmpty() || cooling > 0 ||
-            (!ore.isEmpty() && !ore.equals(sourceOre))) return 0;
+            (!ore.isEmpty() && !OreCompatibility.canonical(ore).equals(
+                OreCompatibility.canonical(sourceOre)))) return 0;
         int target = castingTarget();
-        if (OreCompatibility.castingOutput(sourceOre, target) == Items.AIR) return 0;
+        String material=OreCompatibility.canonical(sourceOre);
+        if (OreCompatibility.castingOutput(material,target) == Items.AIR) return 0;
         int moved = Math.max(0, Math.min(maxAmount, target - molten));
         if (moved > 0) {
-            ore = sourceOre;
+            ore = material;
             molten += moved;
             castingRecipe = target;
             refreshPreview();
@@ -148,54 +192,41 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
 
     private void tickSpout() {
         if (level == null) return;
-        // Align both old and newly placed spouts so the rear socket actually faces
-        // its neighboring vat/tank. This also fixes old worlds without replacement.
+        // Re-orient old spouts and newly connected sources.
         if (level.getGameTime() % 20 == 0) {
-            Direction supply = null;
             Direction back = getBlockState().getValue(OreMachineBlock.FACING).getOpposite();
-            if (level.getBlockEntity(worldPosition.relative(back)) instanceof OreMachineEntity candidate
-                    && (candidate.kind() == OreMachines.Kind.VAT || candidate.kind() == OreMachines.Kind.TANK)) {
-                supply = back;
+            Direction supply = null;
+            if (level.getBlockEntity(worldPosition.relative(back)) instanceof OreMachineEntity test
+                    && (test.kind() == OreMachines.Kind.VAT || test.kind() == OreMachines.Kind.TANK)) {
+                supply=back;
             } else {
-                for (Direction dir : Direction.Plane.HORIZONTAL) {
-                    if (level.getBlockEntity(worldPosition.relative(dir)) instanceof OreMachineEntity candidate
-                            && (candidate.kind() == OreMachines.Kind.VAT || candidate.kind() == OreMachines.Kind.TANK)) {
-                        supply = dir;
-                        break;
+                for (Direction direction:Direction.Plane.HORIZONTAL) {
+                    if (level.getBlockEntity(worldPosition.relative(direction)) instanceof OreMachineEntity test
+                            && (test.kind() == OreMachines.Kind.VAT || test.kind() == OreMachines.Kind.TANK)) {
+                        supply=direction; break;
                     }
                 }
             }
-            if (supply != null && getBlockState().getValue(OreMachineBlock.FACING) != supply.getOpposite())
-                level.setBlock(worldPosition,
-                    getBlockState().setValue(OreMachineBlock.FACING, supply.getOpposite()), Block.UPDATE_ALL);
+            if (supply != null && back != supply) {
+                level.setBlock(worldPosition,getBlockState().setValue(OreMachineBlock.FACING,
+                    supply.getOpposite()),Block.UPDATE_ALL);
+            }
         }
         if (!auto) return;
-        if (!(level.getBlockEntity(worldPosition.below()) instanceof OreMachineEntity receiver)
-             || receiver.kind() != OreMachines.Kind.CASTING) return;
-        OreMachineEntity source = null;
-        // Prefer source on the back side of the spout, but accept any horizontal neighboring vat/tank.
-        Direction back = getBlockState().getValue(OreMachineBlock.FACING).getOpposite();
-        Direction[] choices = {back, Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
-        for (Direction dir : choices) {
-            if (level.getBlockEntity(worldPosition.relative(dir)) instanceof OreMachineEntity neighbor
-                    && (neighbor.kind() == OreMachines.Kind.VAT || neighbor.kind() == OreMachines.Kind.TANK)
-                    && neighbor.molten > 0 && !neighbor.ore.isEmpty()) {
-                source = neighbor;
-                break;
-            }
-        }
-        if (source == null) return;
-        int transferred = receiver.acceptPour(source.ore, Math.min(POUR_RATE, source.molten));
-        if (transferred > 0) {
-            source.molten -= transferred;
-            if (source.molten == 0) source.ore = "";
-            source.refreshPreview();
-            source.changed();
-            if (receiver.cooling > 0) {
-                auto = false; // spout automatically closes once the mold is full
-                changed();
-            }
-        }
+        OreMachineEntity source=moltenSource();
+        OreMachineEntity cast=castingReceiver();
+        if (source == null || cast == null) return;
+        // Resolve both ends to their actual output material so granite diamond,
+        // deepslate diamond, and normal diamond can share one molten family.
+        String sourceMaterial=OreCompatibility.canonical(source.ore);
+        int moved=cast.acceptPour(sourceMaterial,Math.min(POUR_RATE,source.molten));
+        if (moved <= 0) return;
+        source.molten-=moved;
+        if (source.molten == 0) source.ore="";
+        source.refreshPreview();
+        source.changed();
+        // Remain enabled after the mold fills: pause through cooling/output,
+        // then resume when the player collects the result.
     }
 
     private void tickCasting() {
@@ -330,7 +361,7 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
     }
 
     private void seedOre(String src) {
-        ore = src;
+        ore = OreCompatibility.canonical(src);
         progress = 0;
         refreshPreview();
         refreshGrowthStage();
@@ -359,7 +390,7 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
             return;
         }
         if (grows() && ore.isEmpty()) {
-            String src = OreCompatibility.fromOre(stack);
+            String src = OreCompatibility.fromOre(stack, level, worldPosition);
             if (!src.isEmpty()) {
                 seedOre(src);
                 takeHand(player, stack);
@@ -482,7 +513,7 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         if (applyUpgrade(input)) { input.shrink(1); changed(); return; }
         if (grows()) {
             if (ore.isEmpty()) {
-                String source = OreCompatibility.fromOre(input);
+                String source = OreCompatibility.fromOre(input, level, worldPosition);
                 if (!source.isEmpty()) { seedOre(source); input.shrink(1); changed(); }
             }
             return;
@@ -635,6 +666,7 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         output.putInt("speed", speed);
         output.putInt("density", density);
         output.putBoolean("auto", auto);
+        if (kind() == OreMachines.Kind.SPOUT) output.putBoolean("spout_v2", true);
         output.putInt("grinding_bits", grindingBits);
         output.putInt("queued", queued);
         output.putInt("molten", molten);
@@ -645,11 +677,14 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
     @Override protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
         ContainerHelper.loadAllItems(input, items);
-        ore = input.getStringOr("ore", "");
+        ore = OreCompatibility.canonical(input.getStringOr("ore", ""));
         progress = input.getIntOr("progress", 0);
         speed = Math.clamp(input.getIntOr("speed", 0), 0, 3);
         density = Math.clamp(input.getIntOr("density", 0), 0, 3);
-        auto = input.getBooleanOr("auto", false);
+        auto = input.getBooleanOr("auto", kind() == OreMachines.Kind.SPOUT);
+        // Previous versions forcibly closed the spout after a single cast.
+        // Re-open older spouts once when migrating their persistent data.
+        if (kind() == OreMachines.Kind.SPOUT && !input.getBooleanOr("spout_v2",false)) auto=true;
         grindingBits = Math.clamp(input.getIntOr("grinding_bits", 0), 0, 3);
         queued = Math.max(0, input.getIntOr("queued", 0));
         molten = Math.max(0, input.getIntOr("molten", 0));

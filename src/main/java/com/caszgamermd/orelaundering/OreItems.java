@@ -43,17 +43,18 @@ public final class OreItems {
     public static final Item BLOCK_MOLD = register("block_mold");
 
     public static ItemStack materialStack(Item item, String ore, int count) {
+        String material = OreCompatibility.canonical(ore);
         ItemStack stack = new ItemStack(item, count);
-        stack.set(SOURCE_ORE, ore);
+        stack.set(SOURCE_ORE, material);
         stack.set(DataComponents.ITEM_NAME, Component.literal(
             (item == COUNTERFEIT_ORE ? "Counterfeit " : "") +
-            OreCompatibility.displayName(ore) +
+            OreCompatibility.displayName(material) +
             (item == ORE_DUST ? " Dust" : " Ore")));
         return stack;
     }
 
     public static String oreOf(ItemStack stack) {
-        return stack.getOrDefault(SOURCE_ORE, "");
+        return OreCompatibility.canonical(stack.getOrDefault(SOURCE_ORE, ""));
     }
 
     private static final ResourceKey<CreativeModeTab> TAB_KEY =

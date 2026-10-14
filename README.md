@@ -67,15 +67,17 @@ The previous direct-cast interface on the vat/tank has been replaced by casting 
 
 - Lava Tanks and Ore Tanks have eight discrete visually rising fill levels; an empty tank displays no artificial fluid cube.
 - Vat interiors also show eight inset molten levels, while casting table/basin contents fill smoothly and cool in place.
-- Molten pools and poured streams use a grayscale ripple texture shaded toward the **actual ingot/block/gem texture's average color** (including compatible modded materials). Fallback colors cover unusual materials.
+- Molten pools and poured streams use a grayscale ripple texture tinted toward the **weighted average of the actual ingot/gem and storage-block texture colors** (including compatible modded materials). Fallback colors cover unusual materials. A missing custom ripple texture now falls back to **white concrete**, not orange lava, to preserve the material tint.
 - Lava uses the vanilla animated lava sprite. All liquid surfaces are set back from the shell and rim to prevent overlapping faces/z-fighting.
-- Spouts orient toward the adjacent vat/tank automatically, including previously placed ones after a server tick, and render a stream only when a valid transfer can occur.
+- Spouts orient toward the adjacent vat/tank automatically, including previously placed ones. **Spouts start open**, look for a Casting Table 1 or 2 blocks below, and remain open while cooling so they automatically resume after an output is collected. Empty-hand clicking manually closes/reopens them and reports missing connections. The stream only renders while molten material can actually transfer.
 
 ## Ore compatibility
 
-Ore identifiers are preserved on counterfeit ore and dust item components. Known host-rock prefixes (granite, diorite, andesite, tuff, etc.) are stripped during material output lookup, so many alternate host-rock ores can produce the same ingot/gem/block.
+Planted ore is **resolved to its mined output** where a normal tool/loot-table drop is available. Host-rock variants like `example:granite_diamond_ore` and `minecraft:deepslate_diamond_ore` both produce **Counterfeit Diamond Ore** instead of separate rock-named counterfeit ores. Mined drops are checked with an iron pickaxe; unusual dynamic loot tables fall back to normalization of the ore registry ID. Original save items/material IDs are normalized when read.
 
-Casting outputs are resolved using registered item names in the source mod's namespace and vanilla Minecraft; not every mod uses conventional names, so some ores may require mappings. **Dynamic examination of mining loot-table drops is not implemented yet.** The mod avoids consuming liquid for unknown casting outputs.
+Counterfeit Ore uses a faceted gem icon, not a miniature stone/ore block, and both the gem and dust are tinted on the client by averaging their matching ingot/gem and storage-block textures. Custom modded ores and texture packs use the same material-color resolver as the molten pools.
+
+Casting outputs are resolved using registered item names in the source mod's namespace and vanilla Minecraft; not every mod uses conventional names, so some ores may require mappings. Dynamic mining-drop examination is supported for normal tool loot tables, with registry-name fallback for loot tables that need special conditions. The mod avoids consuming liquid for unknown casting outputs.
 
 ## Development
 

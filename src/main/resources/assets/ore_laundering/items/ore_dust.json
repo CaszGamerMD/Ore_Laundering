@@ -1,1 +1,11 @@
-{"model":{"type":"minecraft:model","model":"ore_laundering:item/ore_dust"}}
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "ore_laundering:item/ore_dust",
+    "tints": [
+      {
+        "type": "ore_laundering:material"
+      }
+    ]
+  }
+}

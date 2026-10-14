@@ -1,1 +1,11 @@
-{"model":{"type":"minecraft:model","model":"ore_laundering:item/counterfeit_ore"}}
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "ore_laundering:item/counterfeit_ore",
+    "tints": [
+      {
+        "type": "ore_laundering:material"
+      }
+    ]
+  }
+}

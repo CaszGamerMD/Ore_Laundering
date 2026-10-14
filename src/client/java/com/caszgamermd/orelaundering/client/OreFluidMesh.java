@@ -81,11 +81,11 @@ final class OreFluidMesh {
     }
 
     static void drawStream(PoseStack.Pose pose, VertexConsumer output,
-                           TextureAtlasSprite sprite, int light, int tint, float age) {
+                           TextureAtlasSprite sprite, int light, int tint, float age, int dropDistance) {
         if (sprite==null) return;
         // Top meets the end of the compact spout nozzle (1.55px), bottom sits
         // inside the casting table; no two surfaces share the exact same plane.
-        float lo=-.48f, hi=.128f;
+        float lo=dropDistance >= 2 ? -1.48f : -.48f, hi=.128f;
         float cx=.5f, cz=.515f;
         float radius=.039f+ .004f*(float)Math.sin(age*.14f);
         float x0=cx-radius,x1=cx+radius,z0=cz-radius,z1=cz+radius;

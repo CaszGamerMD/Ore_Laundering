@@ -4,7 +4,8 @@
   "package": "com.caszgamermd.orelaundering.client.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
-    "SpriteContentsAccessor"
+    "SpriteContentsAccessor",
+    "ItemTintSourcesAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

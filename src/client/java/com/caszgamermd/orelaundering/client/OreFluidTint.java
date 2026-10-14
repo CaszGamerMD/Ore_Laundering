@@ -20,25 +20,37 @@ final class OreFluidTint {
     private static final Map<TextureAtlasSprite,Integer> SPRITE_COLORS = new WeakHashMap<>();
 
     static int fromMaterial(String ore) {
-        if (ore == null || ore.isEmpty()) return 0xff9c7a64;
-        Item block = OreCompatibility.castingOutput(ore,8100);
-        if (block instanceof BlockItem blockItem) {
-            TextureAtlasSprite sprite = Minecraft.getInstance().getModelManager()
-                .getBlockStateModelSet().getParticleMaterial(blockItem.getBlock().defaultBlockState()).sprite();
-            int color=sample(sprite);
-            if (color != -1) return color;
-        }
-        Item ingot = OreCompatibility.castingOutput(ore,900);
-        if (ingot != Items.AIR) {
-            Identifier itemId=BuiltInRegistries.ITEM.getKey(ingot);
-            Identifier texture=Identifier.fromNamespaceAndPath(itemId.getNamespace(),"item/"+itemId.getPath());
+        if (ore == null || ore.isEmpty()) return 0xffaaaaaa;
+        ore=OreCompatibility.canonical(ore);
+
+        // The ingot/gem sprite is the primary reference; the storage block is
+        // secondary. Resource packs and compatible modded ingots work too.
+        int itemColor=-1,blockColor=-1;
+        Item ingot=OreCompatibility.castingOutput(ore,900);
+        if (ingot!=Items.AIR) {
+            Identifier id=BuiltInRegistries.ITEM.getKey(ingot);
+            Identifier icon=Identifier.fromNamespaceAndPath(id.getNamespace(),"item/"+id.getPath());
             TextureAtlasSprite sprite=Minecraft.getInstance().getAtlasManager()
-                .getAtlasOrThrow(AtlasIds.ITEMS).getSprite(texture);
-            if (sprite!=null && texture.equals(sprite.contents().name())) {
-                int color=sample(sprite);
-                if (color!=-1) return color;
+                .getAtlasOrThrow(AtlasIds.ITEMS).getSprite(icon);
+            if (sprite!=null && icon.equals(sprite.contents().name())) {
+                itemColor=sample(sprite);
             }
         }
+        Item block=OreCompatibility.castingOutput(ore,8100);
+        if(block instanceof BlockItem b) {
+            TextureAtlasSprite sprite=Minecraft.getInstance().getModelManager()
+                .getBlockStateModelSet().getParticleMaterial(b.getBlock().defaultBlockState()).sprite();
+            blockColor=sample(sprite);
+        }
+        if(itemColor!=-1 && blockColor!=-1) {
+            int r=(((itemColor>>16)&255)*2+((blockColor>>16)&255))/3;
+            int g=(((itemColor>>8)&255)*2+((blockColor>>8)&255))/3;
+            int b=((itemColor&255)*2+(blockColor&255))/3;
+            return 0xff000000|(r<<16)|(g<<8)|b;
+        }
+        if(itemColor!=-1)return itemColor;
+        if(blockColor!=-1)return blockColor;
+
         // Common fallback ores and modded materials whose icon does not use
         // conventional paths still get recognizable melt colors.
         String text=ore.toLowerCase(java.util.Locale.ROOT);
