@@ -17,6 +17,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.7.0'
+      - name: Verify molten liquid colors and WAILA overlay status plugins
+        run: python3 scripts/check_molten_and_overlays.py
       - name: Build
         run: gradle build --stacktrace
       - name: Upload mod jar

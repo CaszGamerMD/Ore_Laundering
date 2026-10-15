@@ -18,6 +18,9 @@
     ],
     "client": [
       "com.caszgamermd.orelaundering.client.OreLaunderingClient"
+    ],
+    "jade": [
+      "com.caszgamermd.orelaundering.OreJadePlugin"
     ]
   },
   "depends": {
@@ -33,6 +36,8 @@
     }
   ],
   "suggests": {
-    "caszual_additions": "*"
+    "caszual_additions": "*",
+    "jade": "*",
+    "wthit": "*"
   }
 }

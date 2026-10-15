@@ -68,6 +68,12 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         return ore;
     }
 
+    public int processingPercent() {
+        return queued==0 ? 0 : Math.min(100,progress*100/GRINDER_TICKS);
+    }
+    public int castingCapacityMl() {
+        return kind()==OreMachines.Kind.CASTING ? castingTarget() : 0;
+    }
     public int moltenMl() { return molten; }
 
     public int lavaMilliBuckets() { return lavaMb; }
