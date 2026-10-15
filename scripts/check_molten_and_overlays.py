@@ -56,7 +56,7 @@ tint=(client/"client/OreFluidTint.java").read_text()
 renderer=(client/"client/OreGrowthRenderer.java").read_text()
 status=(main/"OreMachineStatus.java").read_text()
 wthit=(client/"client/OreWthitPlugin.java").read_text()
-jade=(main/"OreJadePlugin.java").read_text()
+jade=(client/"OreJadePlugin.java").read_text()
 assert "OreFluidTint.fromMaterial(" in renderer
 assert "molten_surface" in renderer
 assert 'text.contains("diamond")' in tint
