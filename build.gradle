@@ -23,7 +23,7 @@ repositories {
 }
 dependencies {
  compileOnly "maven.modrinth:nvQzSEkH:ue8CO97w"
- modCompileOnly "mcp.mobius.waila:wthit-api:fabric-20.0.0"
+ compileOnly "mcp.mobius.waila:wthit-api:mojmap-20.0.0"
  minecraft "com.mojang:minecraft:${project.minecraft_version}"
  implementation "net.fabricmc:fabric-loader:${project.loader_version}"
  implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
