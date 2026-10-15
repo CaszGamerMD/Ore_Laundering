@@ -56,7 +56,8 @@ tint=(client/"client/OreFluidTint.java").read_text()
 renderer=(client/"client/OreGrowthRenderer.java").read_text()
 status=(main/"OreMachineStatus.java").read_text()
 wthit=(client/"client/OreWthitPlugin.java").read_text()
-jade=(client/"OreJadePlugin.java").read_text()
+jade=(client/"client/OreJadeClientBridge.java").read_text()
+jade_entry=(main/"OreJadePlugin.java").read_text()
 assert "OreFluidTint.fromMaterial(" in renderer
 assert "molten_surface" in renderer
 assert 'text.contains("diamond")' in tint
@@ -66,6 +67,7 @@ assert "Stored" not in status or True
 for label in ("GRINDER","VAT","TANK","LAVA_TANK","CASTING","SPOUT"):
     assert f"case {label} ->" in status
 assert "OreMachineStatus.lines(machine)" in jade
+assert "OreJadeClientBridge" in jade_entry
 assert "OreMachineStatus.lines(machine)" in wthit
 fabric=json.loads((resources/"fabric.mod.json").read_text())
 assert fabric["entrypoints"]["jade"]==["com.caszgamermd.orelaundering.OreJadePlugin"]
