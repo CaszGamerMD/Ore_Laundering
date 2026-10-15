@@ -15,9 +15,9 @@ Grow counterfeit copies of ore, grind them into dust, melt the dust with lava, a
 | Grow Trough | Floor-grown ore, base yield of two counterfeit ores per cycle |
 | Grinder | Turns counterfeit ore into dust, with bonus yield from Grinding Bit upgrades |
 | Ore Vat | Smelts each dust into a random **300–600 mL** of molten material; needs a lava tank **directly underneath** |
-| Ore Tank | Holds up to **57,600 mL** of one material at a time, with eight visibly changing molten levels |
+| Ore Tank | Stores up to **57,600 mL** of one material; accepts spout pours from above and supplies spouts beside it, keeping all leftovers |
 | Lava Tank | Holds up to **16,000 mB** lava, with eight visible lava heights; supply with lava buckets or the GUI |
-| Vat Spout | Compact faucet that automatically faces and visibly connects into an adjacent Ore Vat or Ore Tank, pouring into the casting table immediately below; empty-hand click toggles the stream |
+| Vat Spout | Compact faucet that draws from an adjacent Ore Vat/Ore Tank and pours downward into a Casting Table **or Ore Tank**; empty-hand click toggles flow |
 | Casting Table / Basin | Casts ingots or nuggets (table) or blocks (basin). Empty-hand click switches between the shapes **only when entirely empty** |
 
 ## Growth
@@ -41,9 +41,26 @@ Seed with a vanilla/modded ore using right-click or the machine's input slot. Gr
 
 The Ore Vat now visibly fills with molten fluid as it processes material, and holds **14,400 mL**. Each dust consumes **50 mB** of lava from the tank below and yields a random **300–600 mL**. Different ores cannot mix in the same vat or molten tank.
 
-To cast, place a **Vat Spout adjacent to the Ore Vat/Ore Tank** and a **Casting Table directly below the spout**. Empty-hand right-click the spout to enable pouring; it fills at **30 mL/tick** and stops when the recipe's capacity is reached. Cooling then takes **30 ticks for nuggets, 80 for ingots, and 160 for blocks**. Collect the finished result from the output slot in the casting table GUI.
+To cast, place a **Vat Spout adjacent to the Ore Vat/Ore Tank** and a **Casting Table one or two blocks below the spout**. Empty-hand right-click the spout to enable pouring; it fills at **30 mL/tick** and stops when the recipe's capacity is reached. Cooling then takes **30 ticks for nuggets, 80 for ingots, and 160 for blocks**. Collect the finished result from the output slot in the casting table GUI.
 
 The casting table defaults to an ingot recipe (900 mL). Insert a **Nugget Mold** to cast nuggets (100 mL), or an **Ingot Mold** for ingots. Empty-hand right-click the casting table to change to **Basin mode** for 8,100 mL blocks.
+
+### Storing leftover molten ore (v0.3.4)
+
+Spouts now transfer molten material **both into and out of Ore Tanks**. An Ore Tank is storage (not an automatic casting device), and it can be a receiving or supplying machine.
+
+**Vat → Ore Tank:** Place a Vat Spout against the side of an Ore Vat, with an Ore Tank directly underneath the spout (or two blocks below with air between). The spout transfers molten material at **30 mL/tick**, stopping when the vat empties or the tank fills. Partial amounts, including less than one ingot, are retained exactly.
+
+**Ore Tank → Casting Table:** Place a second spout beside the Ore Tank, with a Casting Table/Basin one or two blocks beneath its nozzle. Molten ore flows into the mold. The tank keeps any surplus and can feed later casts without a new vat smelting cycle.
+
+**Ore Tank → Ore Tank:** The same spout arrangement can move molten ore to a second Ore Tank, which is useful for relocating stored metal.
+
+- Tanks have a **57,600 mL** capacity and hold **one material at a time**. Matching materials combine; incompatible metals never mix.
+- A full tank pauses incoming pouring without wasting or spilling material. The source keeps its untouched remainder.
+- When its contents reach 0 mL, a tank forgets the old material, so it can later be filled with a different one.
+- The spout remains enabled across filling/cooling and resumes when room opens up. Right-click it empty-handed to close/reopen.
+- A spout can only use a molten Ore Vat or Ore Tank as a source, and a Casting Table or Ore Tank as its destination. Lava tanks are for fuel only.
+- Each machine GUI and optional Jade overlay shows stored mL. The spout GUI identifies whether it is filling a tank or a casting table.
 
 ### Empty-only transformation rule
 
@@ -69,7 +86,7 @@ The previous direct-cast interface on the vat/tank has been replaced by casting 
 - Vat interiors also show eight inset molten levels, while casting table/basin contents fill smoothly and cool in place.
 - Molten pools and poured streams use a grayscale ripple texture tinted toward the **weighted average of the actual ingot/gem and storage-block texture colors** (including compatible modded materials). Fallback colors cover unusual materials. A missing custom ripple texture now falls back to **white concrete**, not orange lava, to preserve the material tint.
 - Lava uses the vanilla animated lava sprite. All liquid surfaces are set back from the shell and rim to prevent overlapping faces/z-fighting.
-- Spouts orient toward the adjacent vat/tank automatically, including previously placed ones. **Spouts start open**, look for a Casting Table 1 or 2 blocks below, and remain open while cooling so they automatically resume after an output is collected. Empty-hand clicking manually closes/reopens them and reports missing connections. The stream only renders while molten material can actually transfer.
+- Spouts orient toward the adjacent vat/tank automatically, including previously placed ones. **Spouts start open**, look for a Casting Table or Ore Tank 1 or 2 blocks below, and remain open while cooling so they automatically resume after an output is collected. Empty-hand clicking manually closes/reopens them and reports missing connections. The stream only renders while molten material can actually transfer.
 
 ## Ore compatibility
 

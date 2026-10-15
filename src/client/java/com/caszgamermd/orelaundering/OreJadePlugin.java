@@ -38,14 +38,25 @@ public final class OreJadePlugin implements IWailaPlugin {
                         tooltip.add(Component.literal("Molten ore: " + amount + " / 14400 mL"));
                         tooltip.add(Component.literal("Lava below: " + machine.menuData.get(10) + " mB"));
                     }
-                    case TANK -> tooltip.add(Component.literal("Stored molten ore: " + amount + " / 57600 mL"));
+                    case TANK -> {
+                        tooltip.add(Component.literal("Stored molten ore: " + amount + " / 57600 mL"));
+                        if (amount > 0) tooltip.add(Component.literal("Material: " +
+                            OreCompatibility.displayName(machine.plantedOre())));
+                    }
                     case LAVA_TANK -> tooltip.add(Component.literal("Stored lava: " +
                         machine.menuData.get(7) + " / 16000 mB"));
                     case CASTING -> {
                         tooltip.add(Component.literal(machine.castingBasin() ? "Basin: 8100 mL block" : "Table: 900 mL ingot / 100 mL nugget"));
                         tooltip.add(Component.literal("Filled: "+amount+" mL"));
                     }
-                    case SPOUT -> tooltip.add(Component.literal("Spout: "+(machine.menuData.get(15)>0?"Open":"Closed")));
+                    case SPOUT -> {
+                        tooltip.add(Component.literal("Spout: " + (machine.menuData.get(15)>0?"Open":"Closed")));
+                        tooltip.add(Component.literal("Source: " + machine.menuData.get(16) + " mL"));
+                        String targetName = switch (machine.menuData.get(19)) {
+                            case 1 -> "Ore Tank"; case 2 -> "Casting Table"; default -> "None";
+                        };
+                        tooltip.add(Component.literal("Target: " + targetName));
+                    }
                     default -> {}
                 }
             }

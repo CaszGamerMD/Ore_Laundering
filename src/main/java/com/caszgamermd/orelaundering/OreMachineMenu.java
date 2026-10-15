@@ -15,13 +15,13 @@ public final class OreMachineMenu extends AbstractContainerMenu {
     private final ContainerData values;
 
     public OreMachineMenu(int id, Inventory player) {
-        this(id, player, new SimpleContainer(3), new SimpleContainerData(16));
+        this(id, player, new SimpleContainer(3), new SimpleContainerData(21));
     }
 
     public OreMachineMenu(int id, Inventory player, Container container, ContainerData data) {
         super(OreMenus.MACHINE, id);
         checkContainerSize(container, 3);
-        checkContainerDataCount(data, 16);
+        checkContainerDataCount(data, 21);
         this.container = container;
         this.values = data;
         // Three primary slots: input, output, and a read-only sample of the source ore.

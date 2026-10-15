@@ -64,12 +64,28 @@ public final class OreMachineScreen extends AbstractContainerScreen<OreMachineMe
         } else if (kind==OreMachines.Kind.TANK.ordinal()) {
             label(g,"Stored ore: "+menu.millilitres(6)+" / 57600 mL",10,72,TEXT);
             bar(g,10,84,menu.millilitres(6),57600,0xffd4b174);
+            label(g,"In: spout above  |  Out: spout beside",10,94,MUTED);
         } else if (kind==OreMachines.Kind.LAVA_TANK.ordinal()) {
             label(g,"Lava: "+menu.value(7)+" / 16000 mB",10,72,TEXT);
             bar(g,10,84,menu.value(7),16000,0xffe46c32);
         } else if (kind==OreMachines.Kind.SPOUT.ordinal()) {
-            label(g,menu.value(15)==1?"Spout: POURING ENABLED":"Spout: CLOSED",10,72,TEXT);
-            label(g,"Empty-hand use to open or close",10,84,MUTED);
+            int status=menu.value(20);
+            String state=switch(status) {
+                case 0 -> "SPOUT CLOSED";
+                case 1 -> "Needs molten Vat or Ore Tank";
+                case 2 -> "No receiver below outlet";
+                case 3 -> "Different material - blocked";
+                case 4 -> "Full / cooling / invalid mold";
+                default -> "POURING MOLTEN ORE";
+            };
+            label(g,state,10,70,status==5?TEXT:MUTED);
+            label(g,"Source: "+menu.millilitres(16)+" mL",10,81,MUTED);
+            int destination=menu.value(19);
+            if(destination==1) {
+                label(g,"Ore Tank: "+menu.millilitres(17)+"/57600 mL",10,92,MUTED);
+            } else if(destination==2) {
+                label(g,"Casting: "+menu.millilitres(17)+"/"+menu.millilitres(18)+" mL",10,92,MUTED);
+            } else label(g,"Target: table or tank below",10,92,MUTED);
         } else if (kind==OreMachines.Kind.CASTING.ordinal()) {
             int held=menu.millilitres(6);
             int target=menu.value(14)==1?8100:(menu.value(13)>0?menu.value(13):900);

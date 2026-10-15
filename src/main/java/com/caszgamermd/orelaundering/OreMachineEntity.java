@@ -72,20 +72,26 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
 
     public int lavaMilliBuckets() { return lavaMb; }
 
-    /** The casting mold 1 or 2 blocks below an outlet. */
-    private @Nullable OreMachineEntity castingReceiver() {
+    /**
+     * A spout can empty into either a casting table or an open Ore Tank.
+     * Receiver is straight below the nozzle (one block or two with air between).
+     * Lava tanks are deliberately excluded: they are fuel, not molten storage.
+     */
+    private @Nullable OreMachineEntity pouringReceiver() {
         if (level == null || kind() != OreMachines.Kind.SPOUT) return null;
         for (int distance = 1; distance <= 2; distance++) {
-            if (level.getBlockEntity(worldPosition.below(distance)) instanceof OreMachineEntity cast
-                    && cast.kind() == OreMachines.Kind.CASTING) {
-                // A two-block pour must have open air between spout and mold.
-                if (distance == 1 || level.getBlockState(worldPosition.below()).isAir()) return cast;
+            if (!(level.getBlockEntity(worldPosition.below(distance)) instanceof OreMachineEntity receiver))
+                continue;
+            OreMachines.Kind receiverKind = receiver.kind();
+            if (receiverKind == OreMachines.Kind.CASTING || receiverKind == OreMachines.Kind.TANK) {
+                if (distance == 1 || level.getBlockState(worldPosition.below()).isAir())
+                    return receiver;
             }
         }
         return null;
     }
 
-    /** Choose the connected side of the faucet before examining other sides. */
+    /** Take molten material from the connected vat or storage tank. */
     private @Nullable OreMachineEntity moltenSource() {
         if (level == null || kind() != OreMachines.Kind.SPOUT) return null;
         Direction back = getBlockState().getValue(OreMachineBlock.FACING).getOpposite();
@@ -102,21 +108,50 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
     }
 
     public int streamDropDistance() {
-        OreMachineEntity receiver = castingReceiver();
+        OreMachineEntity receiver = pouringReceiver();
         return receiver == null ? 1 : Math.max(1, worldPosition.getY() - receiver.worldPosition.getY());
     }
 
-    /** Render the flow only when the faucet truly can move molten material. */
+    /**
+     * A non-mutating test for both casting and storage. This mirrors receiveMolten
+     * so the stream is only drawn while molten liquid can actually move.
+     */
+    private boolean canReceiveMolten(String sourceOre) {
+        String material = OreCompatibility.canonical(sourceOre);
+        if (material.isEmpty()) return false;
+        if (kind() == OreMachines.Kind.TANK) {
+            return molten < TANK_CAPACITY
+                && (molten == 0 || OreCompatibility.canonical(ore).equals(material));
+        }
+        if (kind() == OreMachines.Kind.CASTING) {
+            return cooling == 0 && items.get(1).isEmpty()
+                && molten < castingTarget()
+                && (molten == 0 || OreCompatibility.canonical(ore).equals(material))
+                && OreCompatibility.castingOutput(material, castingTarget()) != Items.AIR;
+        }
+        return false;
+    }
+
+    /** True when the spout has a valid source and a receiver with room. */
     public String flowingOre() {
         if (kind() != OreMachines.Kind.SPOUT || !auto) return "";
-        OreMachineEntity source = moltenSource(), cast = castingReceiver();
-        if (source == null || cast == null) return "";
-        String src = OreCompatibility.canonical(source.ore);
-        if (cast.cooling > 0 || !cast.items.get(1).isEmpty()
-                || cast.molten >= cast.castingTarget()
-                || (!cast.ore.isEmpty() && !OreCompatibility.canonical(cast.ore).equals(src))
-                || OreCompatibility.castingOutput(src,cast.castingTarget()) == Items.AIR) return "";
-        return src;
+        OreMachineEntity source = moltenSource();
+        OreMachineEntity receiver = pouringReceiver();
+        if (source == null || receiver == null || source == receiver) return "";
+        String material = OreCompatibility.canonical(source.ore);
+        return receiver.canReceiveMolten(material) ? material : "";
+    }
+
+    /** Synced display status: closed, no source, no receiver, mismatch, full/blocked, pouring. */
+    private int spoutStatus() {
+        if (kind() != OreMachines.Kind.SPOUT || !auto) return 0;
+        OreMachineEntity source = moltenSource(), receiver = pouringReceiver();
+        if (source == null) return 1;
+        if (receiver == null || source == receiver) return 2;
+        if (receiver.molten > 0 && !OreCompatibility.canonical(receiver.ore).equals(
+                OreCompatibility.canonical(source.ore))) return 3;
+        if (!receiver.canReceiveMolten(source.ore)) return 4;
+        return 5;
     }
 
     public boolean castingBasin() {
@@ -159,35 +194,53 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
         auto = !auto;
         changed();
         if (!auto) { notice(player,"Spout closed"); return; }
-        OreMachineEntity source=moltenSource(), receiver=castingReceiver();
-        if (source == null) notice(player,"Spout open: connect an Ore Vat/Tank with molten material");
-        else if (receiver == null) notice(player,"Spout open: place a Casting Table 1-2 blocks below");
-        else if (OreCompatibility.castingOutput(source.ore,receiver.castingTarget()) == Items.AIR)
-            notice(player,"No casting output for this material and mold (try ingot or basin)");
-        else if (receiver.cooling > 0 || !receiver.items.get(1).isEmpty())
-            notice(player,"Spout waiting for cooling or collected output");
-        else notice(player,"Spout pouring when the mold has room");
+        OreMachineEntity source = moltenSource();
+        OreMachineEntity receiver = pouringReceiver();
+        if (source == null) notice(player, "Spout open: connect an Ore Vat or Ore Tank containing molten ore");
+        else if (receiver == null) notice(player, "Spout open: place a Casting Table or Ore Tank 1-2 blocks below");
+        else if (source == receiver) notice(player, "Spout cannot pour back into its source tank");
+        else if (receiver.kind() == OreMachines.Kind.TANK && receiver.molten >= TANK_CAPACITY)
+            notice(player, "Spout waiting: Ore Tank is full");
+        else if (receiver.kind() == OreMachines.Kind.TANK && !receiver.canReceiveMolten(source.ore))
+            notice(player, "Spout blocked: Ore Tank contains a different material");
+        else if (receiver.kind() == OreMachines.Kind.CASTING && !receiver.canReceiveMolten(source.ore))
+            notice(player, "Spout waiting: incompatible mold, cooling or uncollected output");
+        else notice(player, receiver.kind() == OreMachines.Kind.TANK
+            ? "Spout pouring into Ore Tank" : "Spout pouring into Casting Table");
     }
 
-    private int acceptPour(String sourceOre, int maxAmount) {
-        if (kind() != OreMachines.Kind.CASTING || sourceOre.isEmpty() ||
-            !items.get(1).isEmpty() || cooling > 0 ||
-            (!ore.isEmpty() && !OreCompatibility.canonical(ore).equals(
-                OreCompatibility.canonical(sourceOre)))) return 0;
-        int target = castingTarget();
-        String material=OreCompatibility.canonical(sourceOre);
-        if (OreCompatibility.castingOutput(material,target) == Items.AIR) return 0;
-        int moved = Math.max(0, Math.min(maxAmount, target - molten));
-        if (moved > 0) {
+    /**
+     * Move up to maxAmount of molten material into a storage tank or casting
+     * mold. Never consumes source material here; the spout commits both sides
+     * only after the destination has accepted the exact amount.
+     */
+    private int receiveMolten(String sourceOre, int maxAmount) {
+        if (maxAmount <= 0 || !canReceiveMolten(sourceOre)) return 0;
+        String material = OreCompatibility.canonical(sourceOre);
+        if (kind() == OreMachines.Kind.TANK) {
+            int accepted = Math.min(maxAmount, TANK_CAPACITY - molten);
+            if (accepted <= 0) return 0;
             ore = material;
-            molten += moved;
+            molten += accepted;
+            refreshPreview();
+            changed();
+            return accepted;
+        }
+        if (kind() == OreMachines.Kind.CASTING) {
+            int target = castingTarget();
+            int accepted = Math.min(maxAmount, target - molten);
+            if (accepted <= 0) return 0;
+            ore = material;
+            molten += accepted;
             castingRecipe = target;
             refreshPreview();
-            if (molten >= target) cooling = target == 8100 ? COOLING_TICKS[2] :
-                target == 900 ? COOLING_TICKS[1] : COOLING_TICKS[0];
+            if (molten >= target)
+                cooling = target == 8100 ? COOLING_TICKS[2]
+                    : target == 900 ? COOLING_TICKS[1] : COOLING_TICKS[0];
             changed();
+            return accepted;
         }
-        return moved;
+        return 0;
     }
 
     private void tickSpout() {
@@ -213,20 +266,20 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
             }
         }
         if (!auto) return;
-        OreMachineEntity source=moltenSource();
-        OreMachineEntity cast=castingReceiver();
-        if (source == null || cast == null) return;
-        // Resolve both ends to their actual output material so granite diamond,
-        // deepslate diamond, and normal diamond can share one molten family.
-        String sourceMaterial=OreCompatibility.canonical(source.ore);
-        int moved=cast.acceptPour(sourceMaterial,Math.min(POUR_RATE,source.molten));
+        OreMachineEntity source = moltenSource();
+        OreMachineEntity receiver = pouringReceiver();
+        if (source == null || receiver == null || source == receiver) return;
+        // Transfer the exact accepted mL; leftovers stay in the vat/tank.
+        // An Ore Tank can both receive from one spout and supply a second.
+        String material = OreCompatibility.canonical(source.ore);
+        int moved = receiver.receiveMolten(material, Math.min(POUR_RATE, source.molten));
         if (moved <= 0) return;
-        source.molten-=moved;
-        if (source.molten == 0) source.ore="";
+        source.molten -= moved;
+        if (source.molten == 0) source.ore = "";
         source.refreshPreview();
         source.changed();
-        // Remain enabled after the mold fills: pause through cooling/output,
-        // then resume when the player collects the result.
+        // A full tank pauses; it never spills or mixes materials.
+        // When room is freed, the still-open spout can continue pouring.
     }
 
     private void tickCasting() {
@@ -597,10 +650,20 @@ public final class OreMachineEntity extends BlockEntity implements Container, Me
             case 13 -> castingRecipe;
             case 14 -> castingBasin() ? 1 : 0;
             case 15 -> kind() == OreMachines.Kind.SPOUT && auto ? 1 : 0;
+            case 16 -> kind() == OreMachines.Kind.SPOUT && moltenSource() != null
+                ? moltenSource().molten : 0;
+            case 17 -> kind() == OreMachines.Kind.SPOUT && pouringReceiver() != null
+                ? pouringReceiver().molten : 0;
+            case 18 -> kind() != OreMachines.Kind.SPOUT || pouringReceiver() == null ? 0
+                : pouringReceiver().kind() == OreMachines.Kind.TANK ? TANK_CAPACITY
+                : pouringReceiver().castingTarget();
+            case 19 -> kind() != OreMachines.Kind.SPOUT || pouringReceiver() == null ? 0
+                : pouringReceiver().kind() == OreMachines.Kind.TANK ? 1 : 2;
+            case 20 -> spoutStatus();
             default -> 0;
         }; }
         @Override public void set(int i, int value) {}
-        @Override public int getCount() { return 16; }
+        @Override public int getCount() { return 21; }
     };
 
     @Override public Component getDisplayName() {
