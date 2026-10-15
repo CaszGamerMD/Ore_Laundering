@@ -72,6 +72,6 @@ assert fabric["entrypoints"]["jade"]==["com.caszgamermd.orelaundering.OreJadePlu
 wconfig=json.loads((resources/"wthit_plugins.json").read_text())
 assert wconfig["ore_laundering:machines"]["entrypoints"]["client"] == "com.caszgamermd.orelaundering.client.OreWthitPlugin"
 gradle=(root/"build.gradle").read_text()
-assert "wthit-api:fabric-20.0.0" in gradle
-assert "modCompileOnly" in gradle
+assert "wthit-api:mojmap-20.0.0" in gradle
+assert "compileOnly" in gradle
 print("PASS: neutral molten material tint and registered Jade/WTHIT status overlays")
