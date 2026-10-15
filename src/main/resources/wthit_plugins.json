@@ -1,0 +1,8 @@
+{
+  "ore_laundering:machines": {
+    "entrypoints": {
+      "client": "com.caszgamermd.orelaundering.client.OreWthitPlugin"
+    },
+    "side": "client"
+  }
+}
